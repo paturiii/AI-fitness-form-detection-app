@@ -1,4 +1,4 @@
-# Auth App
+# Accountable Workout
 
 Full-stack authentication app: **FastAPI** backend + **React Native (Expo)** frontend, powered by **Supabase** auth.
 
