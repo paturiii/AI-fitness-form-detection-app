@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .routes import auth_routes, home_routes, profile_routes, settings_routes
+from fastapi import APIRouter, Depends
+from . dependencies import get_current_user, get_history
 
 app = FastAPI(title="Auth App")
 
@@ -21,3 +23,9 @@ app.include_router(settings_routes.router)
 @app.get("/")
 async def health():
     return {"status": "ok"}
+
+@app.get("/history")
+async def user_history():
+    n = get_history()
+
+    return(n)

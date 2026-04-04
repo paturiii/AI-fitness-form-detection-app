@@ -42,3 +42,14 @@ async def get_current_user(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid or expired token",
     )
+
+async def get_history(user: dict = Depends(get_current_user)):
+    try:
+        result = supabase_admin.table("history").select("*").eq("user_id", user["id"]).execute()
+        return result.data
+    except Exception as e:
+        print(f"[DEBUG] history query failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch history",
+        )
