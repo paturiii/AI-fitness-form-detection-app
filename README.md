@@ -38,15 +38,15 @@ Feedback is generated using **pose estimation + rule-based biomechanics**, ensur
 ```
 ├── backend/
 │   ├── src/
-│   │   ├── main.py              # FastAPI entry point
-│   │   ├── supabase_client.py   # Supabase client init
-│   │   ├── dependencies.py      # Auth dependency (token validation)
-│   │   ├── schemas.py           # Pydantic models
+│   │   ├── main.py                 # FastAPI entry point
+│   │   ├── supabase_client.py      # Supabase client init
+│   │   ├── dependencies.py         # Auth dependency (token validation)
+│   │   ├── schemas.py              # Pydantic models
 │   │   └── routes/
-│   │       ├── auth_routes.py   # /auth/signup, /auth/login, /auth/logout, /auth/me
-│   │       ├── home_routes.py   # /home/ (protected)
-│   │       ├── profile_routes.py# /profile/ (protected)
-│   │       └── settings_routes.py# /settings/ (protected)
+│   │       ├── auth_routes.py      # /auth/signup, /auth/login, /auth/logout, /auth/me
+│   │       ├── home_routes.py      # /home/ (protected)
+│   │       ├── profile_routes.py   # /profile/ (protected)
+│   │       └── settings_routes.py  # /settings/ (protected)
 │   ├── requirements.txt
 │   └── .env.example
 └── frontend/
