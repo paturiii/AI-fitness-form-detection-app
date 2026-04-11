@@ -19,3 +19,9 @@ class AuthResponse(BaseModel):
 
 class MessageResponse(BaseModel):
     message: str
+
+
+class WorkoutUpload(BaseModel):
+    muscle_group: str
+    exercises: dict
+    date: str
