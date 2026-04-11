@@ -45,7 +45,7 @@ async def get_current_user(
 
 async def get_history(user: dict = Depends(get_current_user)):
     try:
-        result = supabase_admin.table("history").select("*").eq("user_id", user["id"]).execute()
+        result = supabase_admin.table("history").select("*").eq("user_id", user["id"]).order("date", desc=True).execute()
         return result.data
     except Exception as e:
         print(f"[DEBUG] history query failed: {e}")
@@ -53,3 +53,29 @@ async def get_history(user: dict = Depends(get_current_user)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch history",
         )
+
+async def get_workouts(user: dict = Depends(get_current_user)):
+    try:
+        res = supabase_admin.table('workout_split').select('*').eq('user_id', user['id']).execute()
+        return res.data
+    except Exception as e:
+        print(f"[DEBUG] workout_split query failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch Workouts",)
+
+
+async def upload_new_workout(user: dict = Depends(get_current_user)):
+
+    try:
+        res = supabase_admin.table('history').insert({
+
+        }).execute()
+    
+        if not res:
+            raise HTTPException(status_code=400, detail="Failed to insert data")
+
+        return res.data
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

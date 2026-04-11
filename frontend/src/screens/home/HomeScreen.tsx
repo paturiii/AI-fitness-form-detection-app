@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, FlatList } from "react-native";
 import { api } from "../../services/api";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import Type from "./Edit";
+import { useFocusEffect } from "@react-navigation/native";
 
 type Props = {
   navigation: NativeStackNavigationProp<any>;
@@ -27,19 +28,23 @@ export default function HomeScreen({navigation}: Props) {
   const [loading, setLoading] = useState(true);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
 
-  useEffect(() => {
-    api<{ message: string; history: HistoryEntry[] }>("/home/")
-      .then((data) => {
-        setMessage(data.message); 
-        setHistory(data.history)})
-      .catch(() => setMessage("Failed to load"))
-      .finally(() => setLoading(false));
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      api<{ message: string; history: HistoryEntry[] }>("/home/")
+        .then((data) => {
+          setMessage(data.message);
+          setHistory(data.history);
+        })
+        .catch(() => setMessage("Failed to load"))
+        .finally(() => setLoading(false));
+    }, [])
+  );
 
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={() => navigation.navigate('Type')} style={styles.touch}>
+      <TouchableOpacity onPress={() => navigation.navigate('Type')}>
         <Text style={styles.title}>History</Text>
       </TouchableOpacity>
 
@@ -69,20 +74,21 @@ export default function HomeScreen({navigation}: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "white",
+    backgroundColor: "#0f0f0f",
     alignItems: "center",
     paddingHorizontal: 28,
     paddingTop: 60,
   },
   title: {
-    fontSize: 30
+    fontSize: 30,
+    color: 'white'
   },
   list: {
     width: "100%",
     marginTop: 16,
   },
   card: {
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#2E2E2E",
     borderRadius: 12,
     padding: 16,
     marginVertical: 8,
@@ -95,21 +101,18 @@ const styles = StyleSheet.create({
   muscleGroup: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#222",
+    color: "white",
     marginBottom: 8,
   },
   exercise: {
     fontSize: 14,
-    color: "#555",
+    color: "white",
     marginVertical: 2,
   },
   message: {
     fontSize: 16,
-    color: "#aaa",
+    color: "white",
     textAlign: "center",
     marginTop: 24,
-  },
-  touch: {
-    backgroundColor: "white",
   },
 });
