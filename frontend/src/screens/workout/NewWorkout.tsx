@@ -6,6 +6,7 @@ import {
 import { api } from "../../services/api";
 import { Ionicons } from "@expo/vector-icons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import Entypo from '@expo/vector-icons/Entypo';
 
 type Props = {
     navigation: NativeStackNavigationProp<any>;
@@ -63,7 +64,11 @@ export default function NewWorkout({ navigation }: Props) {
 
     return (
         <SafeAreaView style={styles.container}>
+            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                <Entypo name="chevron-small-left" size={35} color="white" />
+            </TouchableOpacity>
             <ScrollView contentContainerStyle={styles.scroll}>
+
                 <Text style={styles.label}>Muscle Group</Text>
                 <TextInput
                     style={styles.input}
@@ -155,4 +160,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     submitText: { color: "white", fontSize: 18, fontWeight: "600" },
+    backButton:{
+        marginHorizontal: 12
+    }
 });
