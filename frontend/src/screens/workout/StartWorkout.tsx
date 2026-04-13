@@ -7,10 +7,13 @@ import { api } from "../../services/api";
 import { Ionicons } from "@expo/vector-icons";
 import Entypo from "@expo/vector-icons/Entypo";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import {colors} from '../../services/values'
 
 type Props = NativeStackScreenProps<any, "StartWorkout">;
 
 export default function StartWorkout({ navigation, route }: Props) {
+
+
     const { id, muscle_group, exercises: paramExercises } = route.params as {
         id: string;
         muscle_group: string;
@@ -26,9 +29,13 @@ export default function StartWorkout({ navigation, route }: Props) {
         }))
     );
 
+    const [loading, setLoading] = useState(false);
+    const [loadEdit, setLoadEdit] = useState(false);
+    const [saved, setSaved] = useState(paramExercises);
+
     const hasChanged = () => {
-        const original = Object.entries(paramExercises);
-        if (exercises.length!== original.length) return true;
+        const original = Object.entries(saved);
+        if (exercises.length !== original.length) return true;
         return exercises.some((ex, i) => {
             const [origName, origDetails] = original[i];
             return (
@@ -36,8 +43,6 @@ export default function StartWorkout({ navigation, route }: Props) {
             );
         });
     };
-
-    const [loading, setLoading] = useState(false);
 
     const addExercise = () => {
         setExercises([...exercises, { name: "", sets: "", reps: "" }]);
@@ -116,6 +121,35 @@ export default function StartWorkout({ navigation, route }: Props) {
         }
     };
 
+    const handleEdit = async () => {
+        const exerciseMap: Record<string, { sets: number; reps: number }> = {};
+        for (const ex of exercises) {
+            if (ex.name.trim()) {
+                exerciseMap[ex.name.trim()] = {
+                    sets: parseInt(ex.sets) || 0,
+                    reps: parseInt(ex.reps) || 0,
+                };
+            }
+        }
+
+        setLoadEdit(true);
+        try {
+            await api("/workouts/update-split", {
+                method: "PUT",
+                body: {
+                    id,
+                    muscle_group: muscleGroup,
+                    exercises: exerciseMap,
+                },
+            });
+        } catch {
+            Alert.alert("Error", "Failed to update split");
+        } finally {
+            setLoadEdit(false);
+            setSaved(exerciseMap)
+        }
+    };
+
     return (
         <SafeAreaView style={styles.container}>
             <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
@@ -180,15 +214,43 @@ export default function StartWorkout({ navigation, route }: Props) {
                         {loading ? "Logging..." : "Log Workout"}
                     </Text>
                 </TouchableOpacity>
+
+
+                {hasChanged() && (
+                    <TouchableOpacity
+                    style={styles.editBtn}
+                        onPress={() => handleEdit()}
+                        disabled={loadEdit}
+                    >
+                        <Text style={[styles.submitText, {color: '#4CAF50'}]}>
+                            {loadEdit ? "Logging..." : "Save Changes"}
+                        </Text>
+                    </TouchableOpacity>
+                )}
+
+
             </ScrollView>
         </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#0f0f0f" },
-    scroll: { padding: 20 },
-    label: { color: "white", fontSize: 16, fontWeight: "600", marginTop: 16, marginBottom: 8 },
+    container: { 
+        flex: 1, 
+        backgroundColor: "#0f0f0f"
+    },
+
+    scroll: { 
+        padding: 20
+    },
+
+    label: { 
+        color: "white", 
+        fontSize: 16, 
+        fontWeight: "600", 
+        marginTop: 16,
+        marginBottom: 8 },
+
     input: {
         backgroundColor: "#2E2E2E",
         color: "white",
@@ -197,8 +259,17 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginBottom: 8,
     },
-    exerciseRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-    smallInput: { flex: 1 },
+
+    exerciseRow: { 
+        flexDirection: "row", 
+        alignItems: "center", 
+        gap: 8 
+    },
+
+    smallInput: {
+        flex: 1
+    },
+
     addBtn: {
         flexDirection: "row",
         alignItems: "center",
@@ -206,15 +277,31 @@ const styles = StyleSheet.create({
         marginTop: 8,
         marginBottom: 24,
     },
-    addBtnText: { color: "white", fontSize: 16 },
+
+    addBtnText: { 
+        color: "white", 
+        fontSize: 16
+    },
+
     submitBtn: {
-        backgroundColor: "#4CAF50",
-        borderRadius: 10,
+        backgroundColor: '#6C63FF',
+        borderRadius: 12,
         padding: 16,
         alignItems: "center",
     },
-    submitText: { color: "white", fontSize: 18, fontWeight: "600" },
+
+    submitText: { 
+        color: "white", 
+        fontSize: 18, 
+        fontWeight: "600" 
+    },
+    
     backButton: {
         marginHorizontal: 12,
+    },
+
+    editBtn: {
+        alignItems: 'center',
+        marginTop: 16
     },
 });
