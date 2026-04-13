@@ -58,7 +58,7 @@ export default function HomeScreen({navigation}: Props) {
             <Text style={styles.muscleGroup}>{item.muscle_group}</Text>
             <View style={styles.exercise}>
             {Object.entries(item.exercises).map(([name, details]) => (
-              <Text key={name}>
+              <Text style={{color: 'white'}} key={name}>
                 {name} — {details.sets}x{details.reps}
               </Text>
             ))}
