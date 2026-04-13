@@ -1,6 +1,7 @@
 import { View } from "react-native";
 import NewWorkout from "./NewWorkout";
 import Workout from "./WorkoutScreen";
+import StartWorkout from "./StartWorkout";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 const Stack = createNativeStackNavigator();
@@ -10,6 +11,7 @@ export default function WorkoutStack() {
         <Stack.Navigator screenOptions={{ headerShown: false}}>
              <Stack.Screen name="WorkoutScreen" component={Workout}></Stack.Screen>
              <Stack.Screen name="NewWorkout" component={NewWorkout}></Stack.Screen>
+             <Stack.Screen name="StartWorkout" component={StartWorkout}></Stack.Screen>
         </Stack.Navigator>
     )    
 }

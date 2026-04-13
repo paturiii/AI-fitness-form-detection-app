@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from ..schemas import WorkoutUpload
+from ..schemas import WorkoutUpload, WorkoutSplitUpdate
 from ..supabase_client import supabase_admin
 from ..dependencies import get_current_user, get_workouts
 
@@ -31,3 +31,21 @@ async def upload_workout(
         raise HTTPException(status_code=400, detail="Failed to insert workout")
     
     return {"message": "Workout uploaded", "data": res.data}
+
+@router.put("/update-split")
+async def update_split(
+    workout: WorkoutSplitUpdate,
+    user: dict = Depends(get_current_user),
+):
+    res = (
+        supabase_admin.table("workout_split")
+        .update({"muscle_group": workout.muscle_group, "exercises": workout.exercises})
+        .eq("id", workout.id)
+        .eq("user_id", user["id"])
+        .execute()
+    )
+
+    if not res.data:
+        raise HTTPException(status_code=400, detail="Failed to update split")
+
+    return {"message": "Split updated", "data": res.data}

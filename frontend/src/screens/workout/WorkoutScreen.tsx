@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, SafeAreaView } from "react-native";
+import React, { useCallback, useEffect, useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, SafeAreaView, Alert, Button } from "react-native";
 import { api } from "../../services/api";
 import { Ionicons } from "@expo/vector-icons";
 import NewWorkout from "./NewWorkout";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useFocusEffect } from "@react-navigation/native";
+
 
 type Exercises = {
     [name: string]: {
@@ -13,6 +15,7 @@ type Exercises = {
 };
 
 type Workouts = {
+    id: string;
     muscle_group: string;
     exercises: Exercises;
 };
@@ -26,15 +29,28 @@ export default function Workout({navigation}: Props) {
     const [message, setMessage] = useState("");
     const [loading, setLoading] = useState(true);
     const [workout, setWorkout] = useState<Workouts[]>([]);
+    const [quickStart, setQuickStart] = useState(false);
 
-    useEffect(() => {
-        api<{message: string; workout: Workouts[]}>("/workouts/")
-            .then((data) => {
-                setMessage(data.message);
-                setWorkout(data.workout ?? []);})
-            .catch(() => setMessage("Failed to Load"))
-            .finally(() => setLoading(false));
-        },[]);
+    useFocusEffect(
+        useCallback(() => {
+            setLoading(true);
+            api<{message: string; workout: Workouts[]}>("/workouts/")
+                .then((data) => {
+                    setMessage(data.message);
+                    setWorkout(data.workout ?? []);
+                })
+                .catch(() => setMessage("Failed to Load"))
+                .finally(() => setLoading(false));
+        }, [])
+    );
+
+    const quickStartWorkout = (item: Workouts) => {
+        navigation.navigate('StartWorkout', {id: item.id, muscle_group: item.muscle_group, exercises: item.exercises});
+    };
+    
+    const quickWorkout = (item: Workouts) => {
+        Alert.alert('Quick Start', 'Do you want to start this workout', [{text: 'Cancel'}, {text: 'Start', onPress: () => quickStartWorkout(item)}])
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -46,7 +62,7 @@ export default function Workout({navigation}: Props) {
 
             <FlatList data={workout} keyExtractor={(_,index) => index.toString()}
                 renderItem={({ item}) => (
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => quickWorkout(item)}>
                         <View style={styles.card}>
                             <Text style={styles.cardTitle}>{item.muscle_group}</Text>
                             <View>

@@ -25,3 +25,9 @@ class WorkoutUpload(BaseModel):
     muscle_group: str
     exercises: dict
     date: str
+
+
+class WorkoutSplitUpdate(BaseModel):
+    id: str
+    muscle_group: str
+    exercises: dict
