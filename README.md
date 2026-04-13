@@ -44,9 +44,10 @@ Feedback is generated using **pose estimation + rule-based biomechanics**, ensur
 │   │   ├── schemas.py              # Pydantic models
 │   │   └── routes/
 │   │       ├── auth_routes.py      # /auth/signup, /auth/login, /auth/logout, /auth/me
-│   │       ├── home_routes.py      # /home/ (protected)
-│   │       ├── profile_routes.py   # /profile/ (protected)
-│   │       └── settings_routes.py  # /settings/ (protected)
+│   │       ├── home_routes.py      # /home/
+│   │       ├── profile_routes.py   # /profile/
+│   │       ├── settings_routes.py  # /settings/
+│   │       └── wokout_routes.py    # /workouts/upload
 │   ├── requirements.txt
 │   └── .env.example
 └── frontend/
@@ -59,11 +60,14 @@ Feedback is generated using **pose estimation + rule-based biomechanics**, ensur
         │   ├── AuthStack.tsx      # Login → Signup
         │   └── AppTabs.tsx        # Home | Profile | Settings
         └── screens/
-            ├── LoginScreen.tsx
+            ├── auth/
+            │   ├── LoginScreen.tsx
+                └── SignupScreen.tsx
             ├── SignupScreen.tsx
-            ├── HomeScreen.tsx
-            ├── ProfileScreen.tsx
-            └── SettingsScreen.tsx
+            ├── Home/.tsx
+            ├── profile
+            ├── settings
+            └── workout
 ```
 
 ---
