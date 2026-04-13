@@ -62,12 +62,20 @@ Feedback is generated using **pose estimation + rule-based biomechanics**, ensur
         └── screens/
             ├── auth/
             │   ├── LoginScreen.tsx
-                └── SignupScreen.tsx
-            ├── SignupScreen.tsx
-            ├── Home/.tsx
+            │   └── SignupScreen.tsx
+            ├── home
+            │   ├── Edit.tsx
+            │   ├── HomeScreen.tsx
+            │   └── HomeScreenStack.tsx
             ├── profile
+            │   └── ProfileScreen.tsx
             ├── settings
+            │   └── SettingsScreen.tsx
             └── workout
+                ├── NewWorkout.tsx
+                ├── StartWorkout.tsx
+                ├── WorkoutScreen.tsx
+                └── WorkoutStack.tsx
 ```
 
 ---
