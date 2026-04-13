@@ -45,7 +45,7 @@ export default function Workout({navigation}: Props) {
     );
 
     const quickStartWorkout = (item: Workouts) => {
-        navigation.navigate('StartWorkout', {id: item.id, muscle_group: item.muscle_group, exercises: item.exercises});
+        
     };
     
     const quickWorkout = (item: Workouts) => {
@@ -62,7 +62,7 @@ export default function Workout({navigation}: Props) {
 
             <FlatList data={workout} keyExtractor={(_,index) => index.toString()}
                 renderItem={({ item}) => (
-                    <TouchableOpacity onPress={() => quickWorkout(item)}>
+                    <TouchableOpacity onPress={() => navigation.navigate('StartWorkout', {id: item.id, muscle_group: item.muscle_group, exercises: item.exercises})}>
                         <View style={styles.card}>
                             <Text style={styles.cardTitle}>{item.muscle_group}</Text>
                             <View>

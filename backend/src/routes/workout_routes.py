@@ -49,3 +49,7 @@ async def update_split(
         raise HTTPException(status_code=400, detail="Failed to update split")
 
     return {"message": "Split updated", "data": res.data}
+
+@router.delete('/delete-split')
+async def delete_split():
+    pass

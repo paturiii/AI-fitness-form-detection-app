@@ -33,8 +33,8 @@ export default function AppTabs() {
       })}
     >
       <Tab.Screen name="Home" component={HomeScreenStack} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
       <Tab.Screen name="Workout" component={WorkoutStack}/>
+      <Tab.Screen name="Profile" component={ProfileScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );
