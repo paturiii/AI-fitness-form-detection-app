@@ -14,10 +14,12 @@ type Props = {
 
 export default function NewWorkout({ navigation }: Props) {
     const [muscleGroup, setMuscleGroup] = useState("");
+
     const [exercises, setExercises] = useState([
         { name: "", sets: "", reps: "" },
     ]);
     const [loading, setLoading] = useState(false);
+    const [splitLoading, setSplitLoading] = useState(false)
 
     const addExercise = () => {
         setExercises([...exercises, { name: "", sets: "", reps: "" }]);
@@ -59,6 +61,40 @@ export default function NewWorkout({ navigation }: Props) {
             console.error(err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const addSplit = async () => {
+        const exerciseMap: Record<string, { sets: number; reps: number }> = {};
+        for (const ex of exercises) {
+            if (ex.name.trim()) {
+                exerciseMap[ex.name.trim()] = {
+                    sets: parseInt(ex.sets) || 0,
+                    reps: parseInt(ex.reps) || 0,
+                };
+            }
+        }
+
+        setSplitLoading(true);
+
+        try {
+            await api("/workouts/add-split", {
+                method: 'POST',
+                body: {
+                    muscle_group: muscleGroup,
+                    exercises: exerciseMap,
+                    date: new Date().toISOString().split("T")[0],
+                },
+            });
+            navigation.goBack();
+        }
+
+        catch (err) {
+            console.error(err)
+        }
+
+        finally {
+            setSplitLoading(false)
         }
     };
 
@@ -117,24 +153,49 @@ export default function NewWorkout({ navigation }: Props) {
                     <Text style={styles.addBtnText}>Add Exercise</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                    style={[styles.submitBtn, loading && { opacity: 0.5 }]}
-                    onPress={handleSubmit}
-                    disabled={loading}
-                >
-                    <Text style={styles.submitText}>
-                        {loading ? "Saving..." : "Save Workout"}
-                    </Text>
-                </TouchableOpacity>
+                <View style={styles.buttonRow}>
+                    <TouchableOpacity
+                        style={[styles.submitBtn, loading && { opacity: 0.5 }]}
+                        onPress={handleSubmit}
+                        disabled={loading}
+                    >
+                        <Text style={styles.submitText}>
+                            {loading ? "Saving..." : "Post Workout"}
+                        </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.addSplitBtn, splitLoading && { opacity: 0.5 }]}
+                        onPress={addSplit}
+                        disabled={splitLoading}
+                    >
+                        <Text style={styles.submitText}>
+                            {splitLoading ? "Saving..." : "Save Split"}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
             </ScrollView>
         </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#0f0f0f" },
-    scroll: { padding: 20 },
-    label: { color: "white", fontSize: 16, fontWeight: "600", marginTop: 16, marginBottom: 8 },
+    container: { 
+        flex: 1, 
+        backgroundColor: "#0f0f0f" 
+    },
+
+    scroll: { 
+        padding: 20 
+    },
+
+    label: { 
+        color: "white", 
+        fontSize: 16, 
+        fontWeight: "600", 
+        marginTop: 16, 
+        marginBottom: 8 },
+
     input: {
         backgroundColor: "#2E2E2E",
         color: "white",
@@ -143,8 +204,16 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginBottom: 8,
     },
-    exerciseRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-    smallInput: { flex: 1 },
+
+    exerciseRow: { 
+        flexDirection: "row", 
+        alignItems: "center", 
+        gap: 8 },
+
+    smallInput: { 
+        flex: 1 
+    },
+
     addBtn: {
         flexDirection: "row",
         alignItems: "center",
@@ -152,15 +221,40 @@ const styles = StyleSheet.create({
         marginTop: 8,
         marginBottom: 24,
     },
-    addBtnText: { color: "white", fontSize: 16 },
+
+    addBtnText: { 
+        color: "white", 
+        fontSize: 16 },
+
+    buttonRow: {
+        flexDirection: "row",
+        marginHorizontal: -20,
+        padding: 16,
+        gap: 15,
+    },
+
     submitBtn: {
-        backgroundColor: "#4CAF50",
-        borderRadius: 10,
+        flex: 1,
+        backgroundColor: "#6C63FF",
         padding: 16,
         alignItems: "center",
+        borderRadius: 12
     },
-    submitText: { color: "white", fontSize: 18, fontWeight: "600" },
+
+    submitText: { 
+        color: "white", 
+        fontSize: 18, 
+        fontWeight: "600" },
+    
     backButton:{
         marginHorizontal: 12
+    },
+
+    addSplitBtn: {
+        flex: 1,
+        backgroundColor: "#4CAF50",
+        padding: 16,
+        alignItems: "center",
+        borderRadius: 12
     }
 });
