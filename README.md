@@ -1,6 +1,6 @@
-# 🏋️‍♂️ Accountable Workout
+# 🏋️‍♂️ SmartForm
 
-**Accountable Workout** is a mobile application that helps gym-goers improve exercise form by analyzing recorded workout videos and identifying **bad reps** (e.g. incomplete range of motion, asymmetry, poor depth).
+**SmartForm** is a mobile application that helps gym-goers improve exercise form by analyzing recorded workout videos and identifying **bad reps** (e.g. incomplete range of motion, asymmetry, poor depth).
 
 Unlike generic fitness apps, SmartForm focuses on **objective, explainable feedback** using pose estimation and biomechanical rules — not vague “AI scores”.
 
