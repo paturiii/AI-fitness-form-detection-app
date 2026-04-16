@@ -51,9 +51,21 @@ async def update_split(
 
     return {"message": "Split updated", "data": res.data}
 
-@router.delete('/delete-split')
-async def delete_split():
-    pass
+@router.delete('/delete-split/{item_id}')
+async def delete_split(item_id: str, user: dict = Depends(get_current_user)):
+        res = (
+            supabase_admin.table("workout_split")
+            .delete()
+            .eq("id", item_id)
+            .eq("user_id", user["id"])
+            .execute()
+        )
+
+        if not res.data:
+            raise HTTPException(status_code=400, detail="Failed to delete split")
+        
+        return {"message": "Split deleted"}
+    
 
 @router.post("/add-split")
 async def add_split(workout: WorkoutUpload, user: dict = Depends(get_current_user)):

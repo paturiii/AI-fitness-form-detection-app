@@ -6,6 +6,7 @@ import {
 import { api } from "../../services/api";
 import { Ionicons } from "@expo/vector-icons";
 import Entypo from "@expo/vector-icons/Entypo";
+import AntDesign from '@expo/vector-icons/AntDesign';
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import {colors} from '../../services/values'
 
@@ -150,11 +151,48 @@ export default function StartWorkout({ navigation, route }: Props) {
         }
     };
 
+    const pre_handle_delete = async () => {
+        Alert.alert("Delete", `Are you sure you want to delete you ${muscle_group} workout`, [{text : "Yes", onPress: () => handle_delete() }, {text : "No"}])
+    }
+
+    const handle_delete = async () => {
+
+        try {
+            await api(`/workouts/delete-split/${id}`, {
+                method : "DELETE",
+            });
+
+            Alert.alert("Success", "Workout Split deleted", [{text : "OK", onPress: () => navigation.goBack() }])
+        } catch {
+            Alert.alert("Error Failed to delete spit")
+        }
+    };
+
+    const handleGoBack = async () => {
+        if (hasChanged()) {
+            Alert.alert("Unsaved Changes", "You have unsaved changes. Save before leaving?", [{text: "Save edits", onPress: async () => {
+                await handleEdit();
+                navigation.goBack();
+            }},{text: "Discard", style: "destructive", onPress: () => navigation.goBack()}])
+        }
+        else {
+            navigation.goBack()
+        }
+    };
+
     return (
         <SafeAreaView style={styles.container}>
-            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-                <Entypo name="chevron-small-left" size={35} color="white" />
-            </TouchableOpacity>
+
+            <View style={styles.iconContainer}>
+                <TouchableOpacity onPress={() => handleGoBack()}>
+                    <Entypo name="chevron-small-left" size={40} color="white" />
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => pre_handle_delete()}>
+                    <AntDesign name="delete" size={22} color="white" />
+                </TouchableOpacity>
+            </View>
+
             <ScrollView contentContainerStyle={styles.scroll}>
 
                 <Text style={styles.label}>Muscle Group</Text>
@@ -295,13 +333,16 @@ const styles = StyleSheet.create({
         fontSize: 18, 
         fontWeight: "600" 
     },
-    
-    backButton: {
-        marginHorizontal: 12,
-    },
 
     editBtn: {
         alignItems: 'center',
         marginTop: 16
     },
+
+    iconContainer: {
+        marginHorizontal: 12,
+        flexDirection: 'row',
+        alignItems: "center",
+        justifyContent: "space-between"
+    }
 });
