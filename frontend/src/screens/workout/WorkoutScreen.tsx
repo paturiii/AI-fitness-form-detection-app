@@ -10,7 +10,8 @@ import { useFocusEffect } from "@react-navigation/native";
 type Exercises = {
     [name: string]: {
         reps: number,
-        sets: number
+        sets: number,
+        weight: number
     };
 };
 
@@ -68,7 +69,7 @@ export default function Workout({navigation}: Props) {
                             <View>
                                 {Object.entries(item.exercises).map(([name, details]) => (
                                     <Text style={styles.cardText} key={name}>
-                                        {name} — {details.sets}x{details.reps}
+                                        {name} — {details.sets}x{details.reps} @ {details.weight}lbs
                                     </Text>
                                 ))}
                             </View>

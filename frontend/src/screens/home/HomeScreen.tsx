@@ -12,7 +12,8 @@ type Props = {
 type Exercises = {
   [name: string]: {
     reps: number, 
-    sets: number
+    sets: number,
+    weight: number
   };
 };
 
@@ -59,7 +60,7 @@ export default function HomeScreen({navigation}: Props) {
             <View style={styles.exercise}>
             {Object.entries(item.exercises).map(([name, details]) => (
               <Text style={{color: 'white'}} key={name}>
-                {name} — {details.sets}x{details.reps}
+                {name} — {details.sets}x{details.reps} @ {details.weight}lbs
               </Text>
             ))}
             </View>
