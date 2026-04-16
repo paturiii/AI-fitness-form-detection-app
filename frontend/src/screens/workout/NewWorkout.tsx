@@ -16,13 +16,13 @@ export default function NewWorkout({ navigation }: Props) {
     const [muscleGroup, setMuscleGroup] = useState("");
 
     const [exercises, setExercises] = useState([
-        { name: "", sets: "", reps: "" },
+        { name: "", sets: "", reps: "", weight: "" },
     ]);
     const [loading, setLoading] = useState(false);
     const [splitLoading, setSplitLoading] = useState(false)
 
     const addExercise = () => {
-        setExercises([...exercises, { name: "", sets: "", reps: "" }]);
+        setExercises([...exercises, { name: "", sets: "", reps: "", weight: "" }]);
     };
 
     const updateExercise = (index: number, field: string, value: string) => {
@@ -36,12 +36,13 @@ export default function NewWorkout({ navigation }: Props) {
     };
 
     const handleSubmit = async () => {
-        const exerciseMap: Record<string, { sets: number; reps: number }> = {};
+        const exerciseMap: Record<string, { sets: number; reps: number; weight: number }> = {};
         for (const ex of exercises) {
             if (ex.name.trim()) {
                 exerciseMap[ex.name.trim()] = {
                     sets: parseInt(ex.sets) || 0,
                     reps: parseInt(ex.reps) || 0,
+                    weight: parseInt(ex.weight) || 0,
                 };
             }
         }
@@ -65,12 +66,13 @@ export default function NewWorkout({ navigation }: Props) {
     };
 
     const addSplit = async () => {
-        const exerciseMap: Record<string, { sets: number; reps: number }> = {};
+        const exerciseMap: Record<string, { sets: number; reps: number; weight: number }> = {};
         for (const ex of exercises) {
             if (ex.name.trim()) {
                 exerciseMap[ex.name.trim()] = {
                     sets: parseInt(ex.sets) || 0,
                     reps: parseInt(ex.reps) || 0,
+                    weight: parseInt(ex.weight) || 0,
                 };
             }
         }
@@ -139,6 +141,14 @@ export default function NewWorkout({ navigation }: Props) {
                             keyboardType="numeric"
                             value={ex.reps}
                             onChangeText={(v) => updateExercise(index, "reps", v)}
+                        />
+                        <TextInput
+                            style={[styles.input, styles.smallInput]}
+                            placeholder="lbs"
+                            placeholderTextColor="#888"
+                            keyboardType="numeric"
+                            value={ex.weight}
+                            onChangeText={(v) => updateExercise(index, "weight", v)}
                         />
                         {exercises.length > 1 && (
                             <TouchableOpacity onPress={() => removeExercise(index)}>
