@@ -15,3 +15,35 @@ backend/
 └── .env.example
 ```
 
+
+## DB
+
+```
++-----------------------------+
+|          Profiles           |
++-----------------------------+
+| id         : uuid           | 
+| name       : text           |
+| email      : text           |
+| avatar_url : text           |
++-----------------------------+
+
++-----------------------------+
+|        workout_split        |
++-----------------------------+
+| user_id       : uuid        | 
+| id            : uuid        |
+| exercises     : json        |
+| muscle_group  : text        |
++-----------------------------+
+
++-----------------------------+
+|          history            |
++-----------------------------+
+| user_id       : uuid        | 
+| id            : uuid        |
+| date          : date        |
+| exercises     : json        |
+| muscle_group  : text        |
++-----------------------------+
+```
