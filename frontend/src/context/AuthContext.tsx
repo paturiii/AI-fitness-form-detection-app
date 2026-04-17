@@ -4,6 +4,7 @@ import { api, setTokens, clearTokens, getToken } from "../services/api";
 type User = {
   id: string;
   email: string;
+  first_name?: string | null;
 } | null;
 
 type AuthContextType = {
@@ -31,8 +32,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
         return;
       }
-      const data = await api<{ id: string; email: string }>("/auth/me");
-      setUser({ id: data.id, email: data.email });
+      const data = await api<{ id: string; email: string; first_name?: string | null }>("/auth/me");
+      setUser({ id: data.id, email: data.email, first_name: data.first_name });
     } catch {
       await clearTokens();
       setUser(null);

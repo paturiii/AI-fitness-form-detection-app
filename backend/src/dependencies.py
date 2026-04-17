@@ -64,18 +64,3 @@ async def get_workouts(user: dict = Depends(get_current_user)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to fetch Workouts",)
 
-
-async def upload_new_workout(user: dict = Depends(get_current_user)):
-
-    try:
-        res = supabase_admin.table('history').insert({
-
-        }).execute()
-    
-        if not res:
-            raise HTTPException(status_code=400, detail="Failed to insert data")
-
-        return res.data
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
