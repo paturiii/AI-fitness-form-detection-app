@@ -103,7 +103,7 @@ export default function ProfileScreen() {
         </View>
         <View style={styles.statCard}>
           <Ionicons name="trophy-outline" size={22} color="#FFD54F" />
-          <Text style={styles.statValue}>{bestMonth}</Text>
+          <Text style={styles.statValue}>{MONTH_LABELS[bestMonth]}</Text>
           <Text style={styles.statLabel}>Best Month</Text>
         </View>
       </View>
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#0f0f0f",
   },
   scrollContent: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 40,
     alignItems: "center",

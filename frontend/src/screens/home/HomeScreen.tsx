@@ -1,9 +1,16 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from "react-native";
+import React, { useCallback, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { api } from "../../services/api";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import Type from "./Edit";
 import { useFocusEffect } from "@react-navigation/native";
+import { useAuth } from "../../context/AuthContext";
 
 type Props = {
   navigation: NativeStackNavigationProp<any>;
@@ -11,9 +18,9 @@ type Props = {
 
 type Exercises = {
   [name: string]: {
-    reps: number, 
-    sets: number,
-    weight: number
+    reps: number;
+    sets: number;
+    weight: number;
   };
 };
 
@@ -21,11 +28,19 @@ type HistoryEntry = {
   date: string;
   muscle_group: string;
   exercises: Exercises;
+};
+
+function formatDate(raw: string): string {
+  const d = new Date(raw + "T00:00:00");
+  return d.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
 }
 
-export default function HomeScreen({navigation}: Props) {
-  
-  const [message, setMessage] = useState("");
+export default function HomeScreen({ navigation }: Props) {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
 
@@ -33,41 +48,73 @@ export default function HomeScreen({navigation}: Props) {
     useCallback(() => {
       setLoading(true);
       api<{ message: string; history: HistoryEntry[] }>("/home/")
-        .then((data) => {
-          setMessage(data.message);
-          setHistory(data.history);
-        })
-        .catch(() => setMessage("Failed to load"))
+        .then((data) => setHistory(data.history ?? []))
+        .catch(() => setHistory([]))
         .finally(() => setLoading(false));
     }, [])
   );
 
+  const greeting = user?.first_name
+    ? `Hey, ${user.first_name}`
+    : "Welcome back";
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={() => navigation.navigate('Type')}>
-        <Text style={styles.title}>History</Text>
-      </TouchableOpacity>
+      <View style={styles.header}>
+        <Text style={styles.greeting}>{greeting}</Text>
+        <Text style={styles.subtitle}>Your recent activity</Text>
+      </View>
 
-      <FlatList
-        data={history}
-        keyExtractor={(_, index) => index.toString()}
-        style={styles.list}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Text style={styles.date}>{item.date}</Text>
-            <Text style={styles.muscleGroup}>{item.muscle_group}</Text>
-            <View style={styles.exercise}>
-            {Object.entries(item.exercises).map(([name, details]) => (
-              <Text style={{color: 'white'}} key={name}>
-                {name} — {details.sets}x{details.reps} @ {details.weight}lbs
-              </Text>
-            ))}
+      {loading ? (
+        <ActivityIndicator
+          color="#6C63FF"
+          size="large"
+          style={{ marginTop: 60 }}
+        />
+      ) : (
+        <FlatList
+          data={history}
+          keyExtractor={(_, index) => index.toString()}
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.muscleGroup}>{item.muscle_group}</Text>
+                  <Text style={styles.date}>{formatDate(item.date)}</Text>
+                </View>
+              </View>
+              <View style={styles.divider} />
+              <View style={styles.exerciseList}>
+                {Object.entries(item.exercises).map(([name, details]) => (
+                  <View key={name} style={styles.exerciseRow}>
+                    <Text style={styles.exerciseName}>{name}</Text>
+                    <Text style={styles.exerciseDetail}>
+                      {details.sets}x{details.reps} @ {details.weight}lbs
+                    </Text>
+                  </View>
+                ))}
+              </View>
             </View>
-          </View>
-        )}
-        ListEmptyComponent={<Text style={styles.message}>No history yet</Text>}
-      />
+          )}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <Ionicons
+                name="fitness-outline"
+                size={48}
+                color="#333"
+                style={{ marginBottom: 12 }}
+              />
+              <Text style={styles.emptyTitle}>No workouts yet</Text>
+              <Text style={styles.emptySubtitle}>
+                Complete a workout to see it here
+              </Text>
+            </View>
+          }
+        />
+      )}
     </View>
   );
 }
@@ -76,44 +123,93 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#0f0f0f",
-    alignItems: "center",
     paddingHorizontal: 20,
     paddingTop: 60,
   },
-  title: {
-    fontSize: 30,
-    color: 'white'
+  header: {
+    marginBottom: 20,
   },
-  list: {
-    width: "100%",
-    marginTop: 16,
-  },
-  card: {
-    backgroundColor: "#2E2E2E",
-    borderRadius: 12,
-    padding: 16,
-    marginVertical: 8,
-  },
-  date: {
-    fontSize: 14,
-    color: "#888",
+  greeting: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#fff",
     marginBottom: 4,
   },
-  muscleGroup: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "white",
-    marginBottom: 8,
-  },
-  exercise: {
+  subtitle: {
     fontSize: 14,
-    color: "white",
-    marginVertical: 2,
+    color: "#666",
+    fontWeight: "500",
   },
-  message: {
+  list: {
+    flex: 1,
+  },
+  listContent: {
+    paddingBottom: 24,
+  },
+  card: {
+    backgroundColor: "#1a1a1a",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  iconBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "rgba(108, 99, 255, 0.12)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  muscleGroup: {
     fontSize: 16,
-    color: "white",
-    textAlign: "center",
-    marginTop: 24,
+    fontWeight: "700",
+    color: "#fff",
+  },
+  date: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 2,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#2a2a2a",
+    marginVertical: 12,
+  },
+  exerciseList: {
+    gap: 6,
+  },
+  exerciseRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  exerciseName: {
+    fontSize: 14,
+    color: "#ccc",
+    fontWeight: "500",
+  },
+  exerciseDetail: {
+    fontSize: 13,
+    color: "#888",
+    fontWeight: "500",
+  },
+  emptyState: {
+    alignItems: "center",
+    marginTop: 80,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#555",
+    marginBottom: 4,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: "#444",
   },
 });
