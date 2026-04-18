@@ -55,37 +55,44 @@ export default function Workout({navigation}: Props) {
 
     return (
         <SafeAreaView style={styles.container}>
-            <View>
-                <TouchableOpacity onPress={() => navigation.navigate('NewWorkout')}>
-                    <Ionicons name="add" size ={28} color="white"/>
-                </TouchableOpacity>
+            <View style={styles.horizontal}>
+                <View>
+                    <TouchableOpacity onPress={() => navigation.navigate('NewWorkout')}>
+                        <Ionicons name="add" size ={28} color="white"/>
+                    </TouchableOpacity>
+                </View>
+
+                <FlatList data={workout} keyExtractor={(_,index) => index.toString()}
+                    renderItem={({ item}) => (
+                        <TouchableOpacity onPress={() => navigation.navigate('StartWorkout', {id: item.id, muscle_group: item.muscle_group, exercises: item.exercises})}>
+                            <View style={styles.card}>
+                                <Text style={styles.cardTitle}>{item.muscle_group}</Text>
+                                <View>
+                                    {Object.entries(item.exercises).map(([name, details]) => (
+                                        <Text style={styles.cardText} key={name}>
+                                            {name} — {details.sets}x{details.reps} @ {details.weight}lbs
+                                        </Text>
+                                    ))}
+                                </View>
+                            </View>
+                        </TouchableOpacity>
+                    )}
+                    ListEmptyComponent={<Text>No Workout Splits Saved</Text>}/>
+
             </View>
 
-            <FlatList data={workout} keyExtractor={(_,index) => index.toString()}
-                renderItem={({ item}) => (
-                    <TouchableOpacity onPress={() => navigation.navigate('StartWorkout', {id: item.id, muscle_group: item.muscle_group, exercises: item.exercises})}>
-                        <View style={styles.card}>
-                            <Text style={styles.cardTitle}>{item.muscle_group}</Text>
-                            <View>
-                                {Object.entries(item.exercises).map(([name, details]) => (
-                                    <Text style={styles.cardText} key={name}>
-                                        {name} — {details.sets}x{details.reps} @ {details.weight}lbs
-                                    </Text>
-                                ))}
-                            </View>
-                        </View>
-                    </TouchableOpacity>
-                )}
-                ListEmptyComponent={<Text>No Workout Splits Saved</Text>}/>
-
-        </SafeAreaView>
+            </SafeAreaView>
     )
 }
 
 const styles = StyleSheet.create({
     container: {
         flex:1,
-        backgroundColor: "#0f0f0f"
+        backgroundColor: "#0f0f0f",
+    },
+
+    horizontal: {
+        paddingHorizontal: 20
     },
 
     card: {
@@ -93,7 +100,6 @@ const styles = StyleSheet.create({
         backgroundColor: "#2E2E2E",
         padding: 16,
         justifyContent: 'center',
-        marginHorizontal: 50,
         borderRadius: 12,
     },
 
