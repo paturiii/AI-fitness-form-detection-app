@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       auth: false,
     });
     await setTokens(data.access_token, data.refresh_token);
-    setUser(data.user);
+    await checkAuth();
   }
 
   async function signup(email: string, password: string) {
@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       auth: false,
     });
     await setTokens(data.access_token, data.refresh_token);
-    setUser(data.user);
+    await checkAuth();
   }
 
   async function logout() {
