@@ -62,9 +62,12 @@ export default function ProfileScreen() {
   const currentYear = String(now.getFullYear());
   const totalWorkouts = Object.entries(counts)
     .filter(([key]) => key.startsWith(currentYear))
-    .reduce((s, [, v]) => s + v, 0);  const bestMonth = Object.values(counts).length
-    ? Math.max(...Object.values(counts))
-    : 0;
+    .reduce((s, [, v]) => s + v, 0);
+
+  const bestMonthKey = Object.entries(counts)
+    .filter(([key]) => key.startsWith(currentYear))
+    .sort((a, b) => b[1] - a[1])[0]?.[0];
+  const bestMonth = bestMonthKey ? formatMonth(bestMonthKey) : "N/A";
 
   const displayName = user?.first_name ?? user?.email ?? "User";
   const initial = displayName.charAt(0).toUpperCase();
@@ -103,7 +106,7 @@ export default function ProfileScreen() {
         </View>
         <View style={styles.statCard}>
           <Ionicons name="trophy-outline" size={22} color="#FFD54F" />
-          <Text style={styles.statValue}>{MONTH_LABELS[bestMonth]}</Text>
+          <Text style={styles.statValue}>{bestMonth}</Text>
           <Text style={styles.statLabel}>Best Month</Text>
         </View>
       </View>
