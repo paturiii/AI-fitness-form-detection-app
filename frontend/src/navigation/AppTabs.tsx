@@ -2,11 +2,10 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 import HomeScreenStack from "../screens/home/HomeScreenStack";
-import ProfileScreen from "../screens/profile/ProfileScreen";
+import ProfileScreenStack from "../screens/profile/ProfileStack";
 import SettingsScreen from "../screens/settings/SettingsScreen";
 import WorkoutStack from "../screens/workout/WorkoutStack";
 import RecordScreen from "../screens/record/RecordScreen";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const Tab = createBottomTabNavigator();
 
@@ -36,7 +35,7 @@ export default function AppTabs() {
     >
       <Tab.Screen name="Home" component={HomeScreenStack} />
       <Tab.Screen name="Workout" component={WorkoutStack}/>
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreenStack} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
       <Tab.Screen name="Record" component={RecordScreen}/>
     </Tab.Navigator>

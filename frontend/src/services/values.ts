@@ -11,7 +11,7 @@ export const card = {
     marginBottom: 8,
     fontWeight: "700",
     cardTextSize: 14,
-    cardBackgroundColor: '#2E2E2E',
+    cardBackgroundColor: '#1a1a1a',
     borderRadius: 12,
     padding: 16,
     horizontalPadding: 20

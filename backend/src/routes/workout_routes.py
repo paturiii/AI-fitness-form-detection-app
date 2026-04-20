@@ -77,14 +77,24 @@ async def add_split(workout: WorkoutUpload, user: dict = Depends(get_current_use
     
     return {"message": 'Split added', 'data': res.data}
 
-def get_exercises_analytics(exercise: str, user: dict = Depends(get_current_user)):  # Need to figure out a way to have a 
+def normalize(name: str) -> list[str]:
+    return name.lower().replace("-", " ").replace("_", " ").split()
+
+
+@router.get("/analytics")
+def get_exercises_analytics(exercise: str, user: dict = Depends(get_current_user)):
 
     data = []
-    
+    search_tokens = normalize(exercise)
+
     res = supabase_admin.table("history").select('*').eq('user_id', user['id']).execute()
 
     for i in res.data:
-        ex = i.get('exercises', {}).get(exercise)
+        exercises_dict = i.get('exercises', {})
+        ex = next(
+            (v for k, v in exercises_dict.items() if normalize(k) == search_tokens),
+            None,
+        )
         if not ex:
             continue
     
@@ -92,8 +102,12 @@ def get_exercises_analytics(exercise: str, user: dict = Depends(get_current_user
         reps = ex.get('reps', 0)
         sets = ex.get('sets', 0)
 
-        e1rm = weight * (1 + reps / 30)
-        volume = weight * reps * sets
+        if weight == 0:
+            e1rm = reps
+            volume = reps * sets
+        else:
+            e1rm = weight * (1 + reps / 30)
+            volume = weight * reps * sets
 
         data.append(
             {
@@ -105,5 +119,5 @@ def get_exercises_analytics(exercise: str, user: dict = Depends(get_current_user
                 "volume": volume,
             }
         )
-        
-        return { "exercise": exercise, 'timeline': data}
+    data.sort(key=lambda d: d["date"])
+    return { "exercise": exercise, 'timeline': data}
