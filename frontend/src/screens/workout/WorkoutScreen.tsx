@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { api } from "../../services/api";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useFocusEffect } from "@react-navigation/native";
+import { colors, card } from "../../services/values";
 
 type Exercises = {
   [name: string]: {
@@ -138,52 +139,60 @@ export default function Workout({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0f0f0f",
-    paddingHorizontal: 20,
+    backgroundColor: colors.backgroundColor,
+    paddingHorizontal: card.horizontalPadding,
     paddingTop: 60,
   },
+
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 20,
   },
+
   title: {
     fontSize: 28,
     fontWeight: "800",
     color: "#fff",
     marginBottom: 4,
   },
+
   subtitle: {
     fontSize: 14,
     color: "#666",
     fontWeight: "500",
   },
+
   addBtn: {
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: "#6C63FF",
+    backgroundColor: colors.purple,
     justifyContent: "center",
     alignItems: "center",
   },
   list: {
     flex: 1,
   },
+
   listContent: {
     paddingBottom: 24,
   },
+
   card: {
     backgroundColor: "#1a1a1a",
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
   },
+
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
   },
+
   iconBadge: {
     width: 36,
     height: 36,
@@ -192,35 +201,42 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+
   cardTitle: {
     flex: 1,
     fontSize: 16,
     fontWeight: "700",
     color: "#fff",
   },
+
   divider: {
     height: 1,
     backgroundColor: "#2a2a2a",
     marginVertical: 12,
   },
+
   exerciseList: {
     gap: 6,
   },
+
   exerciseRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
+  
   exerciseName: {
     fontSize: 14,
     color: "#ccc",
     fontWeight: "500",
   },
+
   exerciseDetail: {
     fontSize: 13,
     color: "#888",
     fontWeight: "500",
   },
+
   emptyState: {
     alignItems: "center",
     marginTop: 80,
@@ -231,6 +247,7 @@ const styles = StyleSheet.create({
     color: "#555",
     marginBottom: 4,
   },
+  
   emptySubtitle: {
     fontSize: 14,
     color: "#444",

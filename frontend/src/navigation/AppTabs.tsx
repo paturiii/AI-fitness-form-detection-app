@@ -5,6 +5,7 @@ import HomeScreenStack from "../screens/home/HomeScreenStack";
 import ProfileScreen from "../screens/profile/ProfileScreen";
 import SettingsScreen from "../screens/settings/SettingsScreen";
 import WorkoutStack from "../screens/workout/WorkoutStack";
+import RecordScreen from "../screens/record/RecordScreen";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const Tab = createBottomTabNavigator();
@@ -28,6 +29,7 @@ export default function AppTabs() {
           else if (route.name === "Profile") iconName = "person";
           else if (route.name === "Settings") iconName = "settings";
           else if (route.name=="Workout") iconName = "barbell";
+          else if (route.name=="Record") iconName = "camera";
           return <Ionicons name={iconName} size={size} color={color} />;
         },
       })}
@@ -36,6 +38,7 @@ export default function AppTabs() {
       <Tab.Screen name="Workout" component={WorkoutStack}/>
       <Tab.Screen name="Profile" component={ProfileScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
+      <Tab.Screen name="Record" component={RecordScreen}/>
     </Tab.Navigator>
   );
 }

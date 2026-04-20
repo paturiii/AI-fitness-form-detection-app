@@ -7,6 +7,7 @@ import { api } from "../../services/api";
 import { Ionicons } from "@expo/vector-icons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import Entypo from '@expo/vector-icons/Entypo';
+import {colors} from "../../services/values"
 
 type Props = {
     navigation: NativeStackNavigationProp<any>;
@@ -192,7 +193,7 @@ export default function NewWorkout({ navigation }: Props) {
 const styles = StyleSheet.create({
     container: { 
         flex: 1, 
-        backgroundColor: "#0f0f0f" 
+        backgroundColor: colors.backgroundColor 
     },
 
     scroll: { 
@@ -207,7 +208,7 @@ const styles = StyleSheet.create({
         marginBottom: 8 },
 
     input: {
-        backgroundColor: "#2E2E2E",
+        backgroundColor: colors.inputfields,
         color: "white",
         borderRadius: 8,
         padding: 12,
@@ -245,7 +246,7 @@ const styles = StyleSheet.create({
 
     submitBtn: {
         flex: 1,
-        backgroundColor: "#6C63FF",
+        backgroundColor: colors.purple,
         padding: 16,
         alignItems: "center",
         borderRadius: 12
@@ -262,7 +263,7 @@ const styles = StyleSheet.create({
 
     addSplitBtn: {
         flex: 1,
-        backgroundColor: "#4CAF50",
+        backgroundColor: colors.green,
         padding: 16,
         alignItems: "center",
         borderRadius: 12
