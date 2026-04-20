@@ -12,8 +12,14 @@ import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../services/api";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { colors } from "../../services/values";
 
 type MonthlyCounts = Record<string, number>;
+
+type Props = {
+  navigation: NativeStackNavigationProp<any>;
+};
 
 const MONTH_LABELS = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -37,7 +43,7 @@ function getLast6Months(): string[] {
   return months;
 }
 
-export default function ProfileScreen() {
+export default function ProfileScreen({navigation}: Props) {
   const { user, logout } = useAuth();
   const [counts, setCounts] = useState<MonthlyCounts>({});
   const [loading, setLoading] = useState(true);
@@ -151,7 +157,17 @@ export default function ProfileScreen() {
         )}
       </View>
 
-      {/* ── Logout ── */}
+      <TouchableOpacity
+        style={styles.analyticsBtn}
+        onPress={() => navigation.navigate("Analytics")}
+      >
+        <Ionicons name="analytics-outline" size={20} color="#6C63FF" />
+        <Text style={styles.analyticsBtnText}>Exercise Analytics</Text>
+        <Ionicons name="chevron-forward" size={18} color="#444" />
+      </TouchableOpacity>
+
+      <View style={{ flex: 1 }} />
+
       <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
         <Text style={styles.logoutText}>Log Out</Text>
       </TouchableOpacity>
@@ -165,6 +181,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#0f0f0f",
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 40,
@@ -225,36 +242,42 @@ const styles = StyleSheet.create({
     backgroundColor: "#1a1a1a",
     borderRadius: 16,
     padding: 20,
-    marginBottom: 32,
+    marginBottom: 5,
   },
+
   chartTitle: {
     fontSize: 16,
     fontWeight: "700",
     color: "#fff",
     marginBottom: 20,
   },
+
   chart: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
     height: 160,
   },
+
   barCol: {
     flex: 1,
     alignItems: "center",
     justifyContent: "flex-end",
   },
+
   bar: {
     width: 28,
     borderRadius: 6,
     minHeight: 4,
   },
+  
   barCount: {
     fontSize: 12,
     color: "#aaa",
     fontWeight: "600",
     marginBottom: 4,
   },
+
   barLabel: {
     fontSize: 11,
     color: "#666",
@@ -262,11 +285,29 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
 
+  analyticsBtn: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1a1a1a",
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 16,
+    gap: 12,
+  },
+  analyticsBtnText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#fff",
+  },
+
   logoutBtn: {
+    width: "100%",
     backgroundColor: "#1a1a1a",
     borderRadius: 12,
     paddingVertical: 14,
-    paddingHorizontal: 48,
+    alignItems: "center",
     borderWidth: 1,
     borderColor: "#ff4444",
   },
