@@ -1,8 +1,6 @@
-from cgitb import reset
 from fastapi import APIRouter, Depends
 from ..supabase_client import supabase_admin
 from ..dependencies import get_current_user
-from datetime import datetime
 from collections import defaultdict
 
 router = APIRouter(prefix="/profile", tags=["profile"])

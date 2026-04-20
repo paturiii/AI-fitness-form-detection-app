@@ -76,3 +76,34 @@ async def add_split(workout: WorkoutUpload, user: dict = Depends(get_current_use
         raise HTTPException(status_code=400, detail="Failed to add split")
     
     return {"message": 'Split added', 'data': res.data}
+
+def get_exercises_analytics(exercise: str, user: dict = Depends(get_current_user)):  # Need to figure out a way to have a 
+
+    data = []
+    
+    res = supabase_admin.table("history").select('*').eq('user_id', user['id']).execute()
+
+    for i in res.data:
+        ex = i.get('exercises', {}).get(exercise)
+        if not ex:
+            continue
+    
+        weight = ex.get('weight', 0)
+        reps = ex.get('reps', 0)
+        sets = ex.get('sets', 0)
+
+        e1rm = weight * (1 + reps / 30)
+        volume = weight * reps * sets
+
+        data.append(
+            {
+                "date": i['date'],
+                "weight": weight,
+                "sets": sets,
+                "reps": reps,
+                "e1rm": e1rm,
+                "volume": volume,
+            }
+        )
+        
+        return { "exercise": exercise, 'timeline': data}
