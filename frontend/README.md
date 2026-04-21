@@ -5,7 +5,9 @@ frontend/
 ├── App.tsx
 └── src/
     ├── context/AuthContext.tsx
-    ├── services/api.ts
+    ├── services
+    │   ├── api.ts
+    │   └── values.ts
     ├── navigation/
     │   ├── RootNavigator.tsx  # Auth guard: shows AuthStack or AppTabs
     │   ├── AuthStack.tsx      # Login → Signup
@@ -19,7 +21,11 @@ frontend/
         │   ├── HomeScreen.tsx
         │   └── HomeScreenStack.tsx
         ├── profile
-        │   └── ProfileScreen.tsx
+        │   ├── AnalyticsScreen.tsx
+        │   ├── ProfileScreen.tsx
+        │   └── ProfileStack.tsx
+        ├── record
+        │   └── RecordScreen.tsx
         ├── settings
         │   └── SettingsScreen.tsx
         └── workout
