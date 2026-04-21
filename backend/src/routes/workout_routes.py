@@ -4,6 +4,8 @@ import supabase
 from ..schemas import WorkoutUpload, WorkoutSplitUpdate
 from ..supabase_client import supabase_admin
 from ..dependencies import get_current_user, get_workouts
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 router = APIRouter(prefix="/workouts", tags=["workouts"])
 
@@ -87,7 +89,19 @@ def get_exercises_analytics(exercise: str, user: dict = Depends(get_current_user
     data = []
     search_tokens = normalize(exercise)
 
-    res = supabase_admin.table("history").select('*').eq('user_id', user['id']).execute()
+    date = datetime.now().date()
+    six = (date - relativedelta(months=6)).replace(day=1)
+
+    res = (
+        supabase_admin.table("history")
+        .select("date, exercises")
+        .eq("user_id", user["id"])
+        .gte("date", str(six))
+        .lte("date", str(date))
+        .order("date", desc= False)
+        .limit(250)
+        .execute()
+    )
 
     for i in res.data:
         exercises_dict = i.get('exercises', {})
@@ -120,4 +134,30 @@ def get_exercises_analytics(exercise: str, user: dict = Depends(get_current_user
             }
         )
     data.sort(key=lambda d: d["date"])
+
+    print(data)
     return { "exercise": exercise, 'timeline': data}
+
+
+@router.get('/analytics/monthly')
+def monthly_stats(exercise: str, user: dict = Depends(get_current_user)):
+    raw = get_exercises_analytics(exercise, user)["timeline"]
+
+    buckets: dict[str, dict] = {}
+    for entry in raw:
+        month = entry["date"][:7]
+        if month not in buckets:
+            buckets[month] = {"e1rm_vals": [], "volume_vals": []}
+        buckets[month]["e1rm_vals"].append(entry["e1rm"])
+        buckets[month]["volume_vals"].append(entry["volume"])
+
+    timeline = [
+        {
+            "date": month,
+            "e1rm": round(sum(b["e1rm_vals"]) / len(b["e1rm_vals"]), 1),
+            "volume": round(sum(b["volume_vals"]) / len(b["volume_vals"]), 1),
+        }
+        for month, b in sorted(buckets.items())
+    ]
+
+    return {"exercise": exercise, "timeline": timeline}
