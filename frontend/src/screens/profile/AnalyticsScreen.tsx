@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { api } from "../../services/api";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
@@ -22,15 +22,22 @@ export default function AnalyticsScreen({ navigation }: Props) {
   const [exercise, setExercise] = useState("");
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [mode, setMode] = useState<"every" | "monthly">("every");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; value: number } | null>(null);
 
-  const getExercise = async (x: string) => {
+  const getExercise = async (x: string, overrideMode?: "every" | "monthly") => {
     if (!x.trim()) return;
     setLoading(true);
     setSearched(true);
+    setTooltip(null);
     try {
-      const res = await api(
-        `/workouts/analytics?exercise=${encodeURIComponent(x.trim())}`
-      );
+      const activeMode = overrideMode ?? mode;
+      const endpoint =
+        activeMode === "every"
+          ? `/workouts/analytics?exercise=${encodeURIComponent(x.trim())}`
+          : `/workouts/analytics/monthly?exercise=${encodeURIComponent(x.trim())}`;
+      const res = await api(endpoint);
       setData(res);
     } catch (error) {
       console.log(error);
@@ -39,6 +46,12 @@ export default function AnalyticsScreen({ navigation }: Props) {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (searched && exercise.trim()) {
+      getExercise(exercise, mode);
+    }
+  }, [mode]);
 
   const labels = data?.timeline?.map((t: any) => t.date.slice(5)) ?? [];
   const maxLabels = 6;
@@ -73,6 +86,44 @@ export default function AnalyticsScreen({ navigation }: Props) {
         >
           <Ionicons name="search" size={20} color="#fff" />
         </TouchableOpacity>
+      </View>
+
+      <View style={{ position: "relative", zIndex: 10, marginBottom: 16 }}>
+        <TouchableOpacity
+          style={styles.dropdownBtn}
+          onPress={() => setDropdownOpen(!dropdownOpen)}
+        >
+          <Text style={styles.dropdownBtnText}>
+            {mode === "every" ? "Every Workout" : "Monthly"}
+          </Text>
+          <Ionicons
+            name={dropdownOpen ? "chevron-up" : "chevron-down"}
+            size={18}
+            color="#fff"
+          />
+        </TouchableOpacity>
+
+        {dropdownOpen && (
+          <View style={styles.dropdownMenu}>
+            {(["every", "monthly"] as const).map((opt) => (
+              <TouchableOpacity
+                key={opt}
+                style={styles.dropdownItem}
+                onPress={() => {
+                  setMode(opt);
+                  setDropdownOpen(false);
+                }}
+              >
+                <Text style={styles.dropdownItemText}>
+                  {opt === "every" ? "Every Workout" : "Monthly"}
+                </Text>
+                {mode === opt && (
+                  <Ionicons name="checkmark" size={18} color="#6C63FF" />
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </View>
 
       {loading && (
@@ -110,6 +161,28 @@ export default function AnalyticsScreen({ navigation }: Props) {
                 stroke: "#6C63FF",
               },
             }}
+            onDataPointClick={({ x, y, value }: { x: number; y: number; value: number }) =>
+              setTooltip({ x, y, value })
+            }
+            decorator={() =>
+              tooltip ? (
+                <View
+                  style={{
+                    position: "absolute",
+                    left: tooltip.x - 30,
+                    top: tooltip.y - 36,
+                    backgroundColor: "#6C63FF",
+                    borderRadius: 8,
+                    paddingHorizontal: 10,
+                    paddingVertical: 4,
+                  }}
+                >
+                  <Text style={{ color: "#fff", fontSize: 13, fontWeight: "700", textAlign: "center" }}>
+                    {Math.round(tooltip.value)}
+                  </Text>
+                </View>
+              ) : null
+            }
             bezier
             style={{ borderRadius: 12 }}
           />
@@ -208,5 +281,41 @@ const styles = StyleSheet.create({
   emptySubtitle: {
     fontSize: 14,
     color: "#444",
+  },
+  dropdownBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#1a1a1a",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  dropdownBtnText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  dropdownMenu: {
+    position: "absolute",
+    top: 52,
+    left: 0,
+    right: 0,
+    backgroundColor: "#1a1a1a",
+    borderRadius: 12,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#2a2a2a",
+  },
+  dropdownItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  dropdownItemText: {
+    color: "#fff",
+    fontSize: 15,
   },
 });

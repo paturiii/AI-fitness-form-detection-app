@@ -29,7 +29,6 @@ async def get_current_user(
                 .eq("id", str(res.user.id))
                 .execute()
             )
-            print(f"[DEBUG] profile query for user {res.user.id}: {profile.data}")
             if profile.data and len(profile.data) > 0:
                 user_data["first_name"] = profile.data[0].get("first_name")
         except Exception as e:

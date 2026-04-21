@@ -63,7 +63,7 @@ export default function HomeScreen({ navigation }: Props) {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.greeting}>{greeting}</Text>
-        <Text style={styles.subtitle}>Your recent activity</Text>
+        <Text style={styles.subtitle}>Your workouts</Text>
       </View>
 
       {loading ? (
