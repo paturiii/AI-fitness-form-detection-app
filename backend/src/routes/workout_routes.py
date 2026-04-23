@@ -1,14 +1,77 @@
 from fastapi import APIRouter, Depends, HTTPException
-import supabase
-
 from ..schemas import WorkoutUpload, WorkoutSplitUpdate
 from ..supabase_client import supabase_admin
 from ..dependencies import get_current_user, get_workouts
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+import numpy as np
+from sklearn.linear_model import LinearRegression
 
 router = APIRouter(prefix="/workouts", tags=["workouts"])
 
+
+# Helper Functions
+def normalize(name: str) -> list[str]:
+    return name.lower().replace("-", " ").replace("_", " ").split()
+
+def get_raw_data(user):
+    date = datetime.now().date()
+    six = (date - relativedelta(months=6)).replace(day=1)
+
+    res = (
+        supabase_admin.table("history")
+        .select("date, exercises")
+        .eq("user_id", user["id"])
+        .gte("date", str(six))
+        .lte("date", str(date))
+        .order("date", desc= False)
+        .limit(250)
+        .execute()
+    )
+
+    return res.data
+
+def get_organized_data(data, search_tokens, exercise):
+
+    res = []
+
+    for i in data:
+        exercises_dict = i.get('exercises', {})
+        ex = next(
+            (v for k, v in exercises_dict.items() if normalize(k) == search_tokens),
+            None,
+        )
+        if not ex:
+            continue
+    
+        weight = ex.get('weight', 0)
+        reps = ex.get('reps', 0)
+        sets = ex.get('sets', 0)
+
+        if weight == 0:
+            e1rm = reps
+            volume = reps * sets
+        
+        else:
+            e1rm = weight * (1 + reps / 30)
+            volume = weight * reps * sets
+
+        res.append(
+            {
+                "date": i['date'],
+                "weight": weight,
+                "sets": sets,
+                "reps": reps,
+                "e1rm": e1rm,
+                "volume": volume,
+            }
+        )
+
+    res.sort(key=lambda d: d["date"])
+    return res
+
+
+# Routes
 @router.get("/")
 async def get_workout_list(user: dict = Depends(get_current_user), workouts: list = Depends(get_workouts)):
     return {
@@ -79,75 +142,26 @@ async def add_split(workout: WorkoutUpload, user: dict = Depends(get_current_use
     
     return {"message": 'Split added', 'data': res.data}
 
-def normalize(name: str) -> list[str]:
-    return name.lower().replace("-", " ").replace("_", " ").split()
-
-
 @router.get("/analytics")
 def get_exercises_analytics(exercise: str, user: dict = Depends(get_current_user)):
-
-    data = []
     search_tokens = normalize(exercise)
+    res = get_raw_data(user)
+    data = get_organized_data(res, search_tokens, exercise)
 
-    date = datetime.now().date()
-    six = (date - relativedelta(months=6)).replace(day=1)
-
-    res = (
-        supabase_admin.table("history")
-        .select("date, exercises")
-        .eq("user_id", user["id"])
-        .gte("date", str(six))
-        .lte("date", str(date))
-        .order("date", desc= False)
-        .limit(250)
-        .execute()
-    )
-
-    for i in res.data:
-        exercises_dict = i.get('exercises', {})
-        ex = next(
-            (v for k, v in exercises_dict.items() if normalize(k) == search_tokens),
-            None,
-        )
-        if not ex:
-            continue
-    
-        weight = ex.get('weight', 0)
-        reps = ex.get('reps', 0)
-        sets = ex.get('sets', 0)
-
-        if weight == 0:
-            e1rm = reps
-            volume = reps * sets
-        else:
-            e1rm = weight * (1 + reps / 30)
-            volume = weight * reps * sets
-
-        data.append(
-            {
-                "date": i['date'],
-                "weight": weight,
-                "sets": sets,
-                "reps": reps,
-                "e1rm": e1rm,
-                "volume": volume,
-            }
-        )
-    data.sort(key=lambda d: d["date"])
-
-    print(data)
     return { "exercise": exercise, 'timeline': data}
-
 
 @router.get('/analytics/monthly')
 def monthly_stats(exercise: str, user: dict = Depends(get_current_user)):
-    raw = get_exercises_analytics(exercise, user)["timeline"]
+    search_tokens = normalize(exercise)
+    raw = get_organized_data(get_raw_data(user), search_tokens, exercise)
 
     buckets: dict[str, dict] = {}
     for entry in raw:
         month = entry["date"][:7]
+        
         if month not in buckets:
             buckets[month] = {"e1rm_vals": [], "volume_vals": []}
+
         buckets[month]["e1rm_vals"].append(entry["e1rm"])
         buckets[month]["volume_vals"].append(entry["volume"])
 
