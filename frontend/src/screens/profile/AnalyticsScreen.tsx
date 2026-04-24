@@ -31,6 +31,7 @@ export default function AnalyticsScreen({ navigation }: Props) {
     setLoading(true);
     setSearched(true);
     setTooltip(null);
+
     try {
       const activeMode = overrideMode ?? mode;
       const endpoint =
@@ -38,10 +39,12 @@ export default function AnalyticsScreen({ navigation }: Props) {
           ? `/workouts/analytics?exercise=${encodeURIComponent(x.trim())}`
           : `/workouts/analytics/monthly?exercise=${encodeURIComponent(x.trim())}`;
       const res = await api(endpoint);
+
       setData(res);
     } catch (error) {
       console.log(error);
       setData(null);
+      
     } finally {
       setLoading(false);
     }
@@ -141,7 +144,7 @@ export default function AnalyticsScreen({ navigation }: Props) {
           </Text>
 
           <View>
-            
+
 
           </View>
 

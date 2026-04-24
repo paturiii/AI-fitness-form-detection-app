@@ -9,13 +9,12 @@ import Entypo from "@expo/vector-icons/Entypo";
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors } from '../../services/values';
+import ExerciseCard, { SetEntry, ExerciseEntry } from "../../components/ExerciseCard";
 
 type Props = NativeStackScreenProps<any, "StartWorkout">;
 
 type SetData = { reps: number; weight: number };
 type ExercisesParam = Record<string, { sets: SetData[] }>;
-type SetEntry = { reps: string; weight: string };
-type ExerciseEntry = { name: string; sets: SetEntry[] };
 
 export default function StartWorkout({ navigation, route }: Props) {
     const { id, muscle_group, exercises: paramExercises } = route.params as {
@@ -231,55 +230,17 @@ export default function StartWorkout({ navigation, route }: Props) {
                 />
 
                 <Text style={styles.label}>Exercises</Text>
-                {exercises.map((ex, exIndex) => (
-                    <View key={exIndex} style={styles.exerciseCard}>
-                        <View style={styles.exerciseHeader}>
-                            <TextInput
-                                style={[styles.input, { flex: 1, marginBottom: 0 }]}
-                                placeholder="Exercise name"
-                                placeholderTextColor="#888"
-                                value={ex.name}
-                                onChangeText={(v) => updateExerciseName(exIndex, v)}
-                            />
-                            {exercises.length > 1 && (
-                                <TouchableOpacity onPress={() => removeExercise(exIndex)}>
-                                    <Ionicons name="close-circle" size={24} color="#ff4444" />
-                                </TouchableOpacity>
-                            )}
-                        </View>
-
-                        {ex.sets.map((set, setIndex) => (
-                            <View key={setIndex} style={styles.setRow}>
-                                <Text style={styles.setLabel}>Set {setIndex + 1}</Text>
-                                <TextInput
-                                    style={[styles.input, styles.smallInput]}
-                                    placeholder="Reps"
-                                    placeholderTextColor="#888"
-                                    keyboardType="numeric"
-                                    value={set.reps}
-                                    onChangeText={(v) => updateSet(exIndex, setIndex, "reps", v)}
-                                />
-                                <TextInput
-                                    style={[styles.input, styles.smallInput]}
-                                    placeholder="lbs"
-                                    placeholderTextColor="#888"
-                                    keyboardType="numeric"
-                                    value={set.weight}
-                                    onChangeText={(v) => updateSet(exIndex, setIndex, "weight", v)}
-                                />
-                                {ex.sets.length > 1 && (
-                                    <TouchableOpacity onPress={() => removeSet(exIndex, setIndex)}>
-                                        <Ionicons name="remove-circle-outline" size={20} color="#ff4444" />
-                                    </TouchableOpacity>
-                                )}
-                            </View>
-                        ))}
-
-                        <TouchableOpacity style={styles.addSetBtn} onPress={() => addSet(exIndex)}>
-                            <Ionicons name="add-circle-outline" size={16} color="#888" />
-                            <Text style={styles.addSetText}>Add Set</Text>
-                        </TouchableOpacity>
-                    </View>
+                {exercises.map((ex, i) => (
+                    <ExerciseCard
+                        key={i}
+                        exercise={ex}
+                        canRemove={exercises.length > 1}
+                        onNameChange={(v) => updateExerciseName(i, v)}
+                        onAddSet={() => addSet(i)}
+                        onRemoveSet={(si) => removeSet(i, si)}
+                        onUpdateSet={(si, field, v) => updateSet(i, si, field, v)}
+                        onRemove={() => removeExercise(i)}
+                    />
                 ))}
 
                 <TouchableOpacity style={styles.addBtn} onPress={addExercise}>
@@ -338,48 +299,6 @@ const styles = StyleSheet.create({
         padding: 12,
         fontSize: 16,
         marginBottom: 8,
-    },
-
-    exerciseCard: {
-        backgroundColor: "#1a1a1a",
-        borderRadius: 12,
-        padding: 12,
-        marginBottom: 12,
-    },
-
-    exerciseHeader: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 8,
-        marginBottom: 12,
-    },
-
-    setRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 8,
-    },
-
-    setLabel: {
-        color: "#888",
-        fontSize: 13,
-        width: 40,
-    },
-
-    smallInput: {
-        flex: 1,
-    },
-
-    addSetBtn: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 4,
-        marginTop: 4,
-    },
-
-    addSetText: {
-        color: "#888",
-        fontSize: 13,
     },
 
     addBtn: {
