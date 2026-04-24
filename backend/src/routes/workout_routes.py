@@ -4,11 +4,14 @@ from ..supabase_client import supabase_admin
 from ..dependencies import get_current_user, get_workouts
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-import numpy as np
-from sklearn.linear_model import LinearRegression
 
 router = APIRouter(prefix="/workouts", tags=["workouts"])
 
+
+"""
+e1RM = weight * (1 + reps/30) for bodyweight bodyweight * (1 + reps/30)
+volume = ∑ weight * reps * sets
+"""
 
 # Helper Functions
 def normalize(name: str) -> list[str]:
@@ -31,44 +34,46 @@ def get_raw_data(user):
 
     return res.data
 
+
 def get_organized_data(data, search_tokens, exercise):
 
-    res = []
-
+    org = []
+    
     for i in data:
         exercises_dict = i.get('exercises', {})
         ex = next(
             (v for k, v in exercises_dict.items() if normalize(k) == search_tokens),
             None,
         )
+       
         if not ex:
             continue
-    
-        weight = ex.get('weight', 0)
-        reps = ex.get('reps', 0)
-        sets = ex.get('sets', 0)
-
-        if weight == 0:
-            e1rm = reps
-            volume = reps * sets
+       
+        max_e1rm = 0
+        total_volume = 0
         
-        else:
-            e1rm = weight * (1 + reps / 30)
-            volume = weight * reps * sets
+        for s in ex['sets']:
+            reps = s.get('reps', 0)
+            weight = s.get('weight', 0)
+            
+            if weight == 0:
+                e1rm = reps
 
-        res.append(
-            {
-                "date": i['date'],
-                "weight": weight,
-                "sets": sets,
-                "reps": reps,
-                "e1rm": e1rm,
-                "volume": volume,
-            }
-        )
-
-    res.sort(key=lambda d: d["date"])
-    return res
+            else:
+                e1rm = weight * (1 + reps / 30)
+            
+            max_e1rm = max(max_e1rm, e1rm)
+            
+            total_volume += weight * reps if weight > 0 else reps
+        
+        org.append({
+            "date": i['date'],
+            "e1rm": round(max_e1rm, 1),
+            "volume": round(total_volume, 1),
+        })
+    
+    org.sort(key=lambda d: d["date"])
+    return org
 
 
 # Routes
