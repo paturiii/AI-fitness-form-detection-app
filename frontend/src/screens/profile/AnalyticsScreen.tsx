@@ -139,6 +139,12 @@ export default function AnalyticsScreen({ navigation }: Props) {
           <Text style={styles.chartTitle}>
             Est. 1RM — {data.exercise}
           </Text>
+
+          <View>
+            
+
+          </View>
+
           <LineChart
             data={{
               labels: displayLabels,

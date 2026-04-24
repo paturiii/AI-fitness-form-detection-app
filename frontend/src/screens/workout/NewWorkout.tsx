@@ -7,54 +7,86 @@ import { api } from "../../services/api";
 import { Ionicons } from "@expo/vector-icons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import Entypo from '@expo/vector-icons/Entypo';
-import {colors} from "../../services/values"
+import { colors } from "../../services/values";
 
 type Props = {
     navigation: NativeStackNavigationProp<any>;
 };
 
+type SetEntry = { reps: string; weight: string };
+type ExerciseEntry = { name: string; sets: SetEntry[] };
+
 export default function NewWorkout({ navigation }: Props) {
     const [muscleGroup, setMuscleGroup] = useState("");
-
-    const [exercises, setExercises] = useState([
-        { name: "", sets: "", reps: "", weight: "" },
+    const [exercises, setExercises] = useState<ExerciseEntry[]>([
+        { name: "", sets: [{ reps: "", weight: "" }] },
     ]);
     const [loading, setLoading] = useState(false);
-    const [splitLoading, setSplitLoading] = useState(false)
+    const [splitLoading, setSplitLoading] = useState(false);
 
     const addExercise = () => {
-        setExercises([...exercises, { name: "", sets: "", reps: "", weight: "" }]);
-    };
-
-    const updateExercise = (index: number, field: string, value: string) => {
-        const updated = [...exercises];
-        updated[index] = { ...updated[index], [field]: value };
-        setExercises(updated);
+        setExercises([...exercises, { name: "", sets: [{ reps: "", weight: "" }] }]);
     };
 
     const removeExercise = (index: number) => {
         setExercises(exercises.filter((_, i) => i !== index));
     };
 
-    const handleSubmit = async () => {
-        const exerciseMap: Record<string, { sets: number; reps: number; weight: number }> = {};
+    const updateExerciseName = (index: number, name: string) => {
+        const updated = [...exercises];
+        updated[index] = { ...updated[index], name };
+        setExercises(updated);
+    };
+
+    const addSet = (exIndex: number) => {
+        const updated = [...exercises];
+        updated[exIndex] = {
+            ...updated[exIndex],
+            sets: [...updated[exIndex].sets, { reps: "", weight: "" }],
+        };
+        setExercises(updated);
+    };
+
+    const removeSet = (exIndex: number, setIndex: number) => {
+        const updated = [...exercises];
+        updated[exIndex] = {
+            ...updated[exIndex],
+            sets: updated[exIndex].sets.filter((_, i) => i !== setIndex),
+        };
+        setExercises(updated);
+    };
+
+    const updateSet = (exIndex: number, setIndex: number, field: keyof SetEntry, value: string) => {
+        const updated = [...exercises];
+        const sets = [...updated[exIndex].sets];
+        sets[setIndex] = { ...sets[setIndex], [field]: value };
+        updated[exIndex] = { ...updated[exIndex], sets };
+        setExercises(updated);
+    };
+
+    const buildExerciseMap = () => {
+        const map: Record<string, { sets: { reps: number; weight: number }[] }> = {};
         for (const ex of exercises) {
             if (ex.name.trim()) {
-                exerciseMap[ex.name.trim()] = {
-                    sets: parseInt(ex.sets) || 0,
-                    reps: parseInt(ex.reps) || 0,
-                    weight: parseInt(ex.weight) || 0,
+                map[ex.name.trim()] = {
+                    sets: ex.sets.map(s => ({
+                        reps: parseInt(s.reps) || 0,
+                        weight: parseInt(s.weight) || 0,
+                    })),
                 };
             }
         }
+        return map;
+    };
 
+    const handleSubmit = async () => {
         setLoading(true);
         try {
             await api("/workouts/upload", {
                 method: "POST",
                 body: {
                     muscle_group: muscleGroup,
-                    exercises: exerciseMap,
+                    exercises: buildExerciseMap(),
                     date: new Date().toISOString().split("T")[0],
                 },
             });
@@ -67,37 +99,21 @@ export default function NewWorkout({ navigation }: Props) {
     };
 
     const addSplit = async () => {
-        const exerciseMap: Record<string, { sets: number; reps: number; weight: number }> = {};
-        for (const ex of exercises) {
-            if (ex.name.trim()) {
-                exerciseMap[ex.name.trim()] = {
-                    sets: parseInt(ex.sets) || 0,
-                    reps: parseInt(ex.reps) || 0,
-                    weight: parseInt(ex.weight) || 0,
-                };
-            }
-        }
-
         setSplitLoading(true);
-
         try {
             await api("/workouts/add-split", {
-                method: 'POST',
+                method: "POST",
                 body: {
                     muscle_group: muscleGroup,
-                    exercises: exerciseMap,
+                    exercises: buildExerciseMap(),
                     date: new Date().toISOString().split("T")[0],
                 },
             });
             navigation.goBack();
-        }
-
-        catch (err) {
-            console.error(err)
-        }
-
-        finally {
-            setSplitLoading(false)
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setSplitLoading(false);
         }
     };
 
@@ -118,44 +134,54 @@ export default function NewWorkout({ navigation }: Props) {
                 />
 
                 <Text style={styles.label}>Exercises</Text>
-                {exercises.map((ex, index) => (
-                    <View key={index} style={styles.exerciseRow}>
-                        <TextInput
-                            style={[styles.input, { flex: 2 }]}
-                            placeholder="Exercise name"
-                            placeholderTextColor="#888"
-                            value={ex.name}
-                            onChangeText={(v) => updateExercise(index, "name", v)}
-                        />
-                        <TextInput
-                            style={[styles.input, styles.smallInput]}
-                            placeholder="Sets"
-                            placeholderTextColor="#888"
-                            keyboardType="numeric"
-                            value={ex.sets}
-                            onChangeText={(v) => updateExercise(index, "sets", v)}
-                        />
-                        <TextInput
-                            style={[styles.input, styles.smallInput]}
-                            placeholder="Reps"
-                            placeholderTextColor="#888"
-                            keyboardType="numeric"
-                            value={ex.reps}
-                            onChangeText={(v) => updateExercise(index, "reps", v)}
-                        />
-                        <TextInput
-                            style={[styles.input, styles.smallInput]}
-                            placeholder="lbs"
-                            placeholderTextColor="#888"
-                            keyboardType="numeric"
-                            value={ex.weight}
-                            onChangeText={(v) => updateExercise(index, "weight", v)}
-                        />
-                        {exercises.length > 1 && (
-                            <TouchableOpacity onPress={() => removeExercise(index)}>
-                                <Ionicons name="close-circle" size={24} color="#ff4444" />
-                            </TouchableOpacity>
-                        )}
+                {exercises.map((ex, exIndex) => (
+                    <View key={exIndex} style={styles.exerciseCard}>
+                        <View style={styles.exerciseHeader}>
+                            <TextInput
+                                style={[styles.input, { flex: 1, marginBottom: 0 }]}
+                                placeholder="Exercise name"
+                                placeholderTextColor="#888"
+                                value={ex.name}
+                                onChangeText={(v) => updateExerciseName(exIndex, v)}
+                            />
+                            {exercises.length > 1 && (
+                                <TouchableOpacity onPress={() => removeExercise(exIndex)}>
+                                    <Ionicons name="close-circle" size={24} color="#ff4444" />
+                                </TouchableOpacity>
+                            )}
+                        </View>
+
+                        {ex.sets.map((set, setIndex) => (
+                            <View key={setIndex} style={styles.setRow}>
+                                <Text style={styles.setLabel}>Set {setIndex + 1}</Text>
+                                <TextInput
+                                    style={[styles.input, styles.smallInput]}
+                                    placeholder="Reps"
+                                    placeholderTextColor="#888"
+                                    keyboardType="numeric"
+                                    value={set.reps}
+                                    onChangeText={(v) => updateSet(exIndex, setIndex, "reps", v)}
+                                />
+                                <TextInput
+                                    style={[styles.input, styles.smallInput]}
+                                    placeholder="lbs"
+                                    placeholderTextColor="#888"
+                                    keyboardType="numeric"
+                                    value={set.weight}
+                                    onChangeText={(v) => updateSet(exIndex, setIndex, "weight", v)}
+                                />
+                                {ex.sets.length > 1 && (
+                                    <TouchableOpacity onPress={() => removeSet(exIndex, setIndex)}>
+                                        <Ionicons name="remove-circle-outline" size={20} color="#ff4444" />
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+                        ))}
+
+                        <TouchableOpacity style={styles.addSetBtn} onPress={() => addSet(exIndex)}>
+                            <Ionicons name="add-circle-outline" size={16} color="#888" />
+                            <Text style={styles.addSetText}>Add Set</Text>
+                        </TouchableOpacity>
                     </View>
                 ))}
 
@@ -191,21 +217,22 @@ export default function NewWorkout({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-    container: { 
-        flex: 1, 
-        backgroundColor: colors.backgroundColor 
+    container: {
+        flex: 1,
+        backgroundColor: colors.backgroundColor,
     },
 
-    scroll: { 
-        padding: 20 
+    scroll: {
+        padding: 20,
     },
 
-    label: { 
-        color: "white", 
-        fontSize: 16, 
-        fontWeight: "600", 
-        marginTop: 16, 
-        marginBottom: 8 },
+    label: {
+        color: "white",
+        fontSize: 16,
+        fontWeight: "600",
+        marginTop: 16,
+        marginBottom: 8,
+    },
 
     input: {
         backgroundColor: colors.inputfields,
@@ -216,13 +243,46 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
 
-    exerciseRow: { 
-        flexDirection: "row", 
-        alignItems: "center", 
-        gap: 8 },
+    exerciseCard: {
+        backgroundColor: "#1a1a1a",
+        borderRadius: 12,
+        padding: 12,
+        marginBottom: 12,
+    },
 
-    smallInput: { 
-        flex: 1 
+    exerciseHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        marginBottom: 12,
+    },
+
+    setRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+    },
+
+    setLabel: {
+        color: "#888",
+        fontSize: 13,
+        width: 40,
+    },
+
+    smallInput: {
+        flex: 1,
+    },
+
+    addSetBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        marginTop: 4,
+    },
+
+    addSetText: {
+        color: "#888",
+        fontSize: 13,
     },
 
     addBtn: {
@@ -233,9 +293,10 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
 
-    addBtnText: { 
-        color: "white", 
-        fontSize: 16 },
+    addBtnText: {
+        color: "white",
+        fontSize: 16,
+    },
 
     buttonRow: {
         flexDirection: "row",
@@ -249,16 +310,17 @@ const styles = StyleSheet.create({
         backgroundColor: colors.purple,
         padding: 16,
         alignItems: "center",
-        borderRadius: 12
+        borderRadius: 12,
     },
 
-    submitText: { 
-        color: "white", 
-        fontSize: 18, 
-        fontWeight: "600" },
-    
-    backButton:{
-        marginHorizontal: 12
+    submitText: {
+        color: "white",
+        fontSize: 18,
+        fontWeight: "600",
+    },
+
+    backButton: {
+        marginHorizontal: 12,
     },
 
     addSplitBtn: {
@@ -266,6 +328,6 @@ const styles = StyleSheet.create({
         backgroundColor: colors.green,
         padding: 16,
         alignItems: "center",
-        borderRadius: 12
-    }
+        borderRadius: 12,
+    },
 });

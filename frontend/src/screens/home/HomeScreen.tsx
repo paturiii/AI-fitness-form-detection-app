@@ -19,9 +19,7 @@ type Props = {
 
 type Exercises = {
   [name: string]: {
-    reps: number;
-    sets: number;
-    weight: number;
+    sets: { reps: number; weight: number }[];
   };
 };
 
@@ -39,6 +37,21 @@ function formatDate(raw: string): string {
     day: "numeric",
   });
 }
+
+const summarizeSets = (sets: { reps: number; weight: number }[]) => {
+  const reps = sets.map((s) => s.reps);
+  const weights = sets.map((s) => s.weight);
+  const minReps = Math.min(...reps);
+  const maxReps = Math.max(...reps);
+  const minWeight = Math.min(...weights);
+  const maxWeight = Math.max(...weights);
+  const repsStr = minReps === maxReps ? `${minReps}` : `${minReps}-${maxReps}`;
+  const count = sets.length;
+  if (maxWeight === 0) return `${count}×${repsStr}`;
+  const weightStr =
+    minWeight === maxWeight ? `${minWeight}` : `${minWeight}-${maxWeight}`;
+  return `${count}×${repsStr} @ ${weightStr}lbs`;
+};
 
 export default function HomeScreen({ navigation }: Props) {
   const { user } = useAuth();
@@ -93,7 +106,7 @@ export default function HomeScreen({ navigation }: Props) {
                   <View key={name} style={styles.exerciseRow}>
                     <Text style={styles.exerciseName}>{name}</Text>
                     <Text style={styles.exerciseDetail}>
-                      {details.sets}x{details.reps} @ {details.weight}lbs
+                      {summarizeSets(details.sets)}
                     </Text>
                   </View>
                 ))}
