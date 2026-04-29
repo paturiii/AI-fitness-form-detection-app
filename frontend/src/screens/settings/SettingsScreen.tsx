@@ -31,12 +31,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     paddingTop: 80,
   },
+  
   title: {
     fontSize: 28,
     fontWeight: "700",
     color: "#fff",
     marginBottom: 28,
   },
+
   card: {
     backgroundColor: "#1a1a1a",
     borderRadius: 12,
@@ -48,11 +50,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#2a2a2a",
   },
+
   label: {
     fontSize: 16,
     color: "#fff",
     fontWeight: "500",
   },
+
   value: {
     fontSize: 14,
     color: "#888",

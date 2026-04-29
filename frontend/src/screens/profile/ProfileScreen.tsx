@@ -180,6 +180,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#0f0f0f",
   },
+
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 20,
@@ -192,6 +193,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 28,
   },
+  
   avatar: {
     width: 80,
     height: 80,
@@ -201,11 +203,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 14,
   },
+
   avatarText: {
     fontSize: 32,
     fontWeight: "700",
     color: "#fff",
   },
+
   name: {
     fontSize: 18,
     fontWeight: "700",
@@ -218,6 +222,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     width: "100%",
   },
+  
   statCard: {
     flex: 1,
     backgroundColor: "#1a1a1a",
@@ -226,11 +231,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
   },
+
   statValue: {
     fontSize: 24,
     fontWeight: "800",
     color: "#fff",
   },
+
   statLabel: {
     fontSize: 12,
     color: "#888",
@@ -295,6 +302,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     gap: 12,
   },
+
   analyticsBtnText: {
     flex: 1,
     fontSize: 16,
@@ -311,6 +319,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ff4444",
   },
+
   logoutText: {
     color: "#ff4444",
     fontSize: 16,
