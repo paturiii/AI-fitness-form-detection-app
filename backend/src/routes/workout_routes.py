@@ -34,7 +34,6 @@ def get_raw_data(user):
 
     return res.data
 
-
 def get_organized_data(data, search_tokens, exercise):
 
     org = []
@@ -103,11 +102,11 @@ async def upload_workout(
     
     return {"message": "Workout uploaded", "data": res.data}
 
+
 @router.put("/update-split")
 async def update_split(
     workout: WorkoutSplitUpdate,
-    user: dict = Depends(get_current_user),
-):
+    user: dict = Depends(get_current_user)):
     res = (
         supabase_admin.table("workout_split")
         .update({"muscle_group": workout.muscle_group, "exercises": workout.exercises})
@@ -120,6 +119,7 @@ async def update_split(
         raise HTTPException(status_code=400, detail="Failed to update split")
 
     return {"message": "Split updated", "data": res.data}
+
 
 @router.delete('/delete-split/{item_id}')
 async def delete_split(item_id: str, user: dict = Depends(get_current_user)):
@@ -147,6 +147,7 @@ async def add_split(workout: WorkoutUpload, user: dict = Depends(get_current_use
     
     return {"message": 'Split added', 'data': res.data}
 
+
 @router.get("/analytics")
 def get_exercises_analytics(exercise: str, user: dict = Depends(get_current_user)):
     search_tokens = normalize(exercise)
@@ -154,6 +155,7 @@ def get_exercises_analytics(exercise: str, user: dict = Depends(get_current_user
     data = get_organized_data(res, search_tokens, exercise)
 
     return { "exercise": exercise, 'timeline': data}
+
 
 @router.get('/analytics/monthly')
 def monthly_stats(exercise: str, user: dict = Depends(get_current_user)):
