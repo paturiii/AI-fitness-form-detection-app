@@ -9,7 +9,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { api } from "../../services/api";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useAuth } from "../../context/AuthContext";
 import { colors, card } from "../../services/values";
 
@@ -53,15 +53,32 @@ const summarizeSets = (sets: { reps: number; weight: number }[]) => {
   return `${count}×${repsStr} @ ${weightStr}lbs`;
 };
 
+type HistoryPage = {
+  history: HistoryEntry[];
+  has_more: boolean;
+};
+
+const PAGE_SIZE = 20;
+
 export default function HomeScreen({ navigation }: Props) {
   const { user } = useAuth();
 
-  const { data, isLoading: loading } = useQuery({
+  const {
+    data,
+    isLoading: loading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ["home"],
-    queryFn: () => api<{ message: string; history: HistoryEntry[] }>("/home/"),
+    queryFn: ({ pageParam = 0 }) =>
+      api<HistoryPage>(`/home/?offset=${pageParam}&limit=${PAGE_SIZE}`),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, _allPages, lastPageParam) =>
+      lastPage.has_more ? lastPageParam + PAGE_SIZE : undefined,
   });
 
-  const history = data?.history ?? [];
+  const history = data?.pages.flatMap((page) => page.history) ?? [];
 
   const greeting = user?.first_name
     ? `Hey, ${user.first_name}`
@@ -87,6 +104,13 @@ export default function HomeScreen({ navigation }: Props) {
           style={styles.list}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          onEndReached={() => { if (hasNextPage) fetchNextPage(); }}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            isFetchingNextPage ? (
+              <ActivityIndicator color="#3C6E71" style={{ marginVertical: 16 }} />
+            ) : null
+          }
           renderItem={({ item }) => (
             <View style={styles.card}>
               <View style={styles.cardHeader}>

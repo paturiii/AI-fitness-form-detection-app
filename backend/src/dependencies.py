@@ -42,9 +42,16 @@ async def get_current_user(
         detail="Invalid or expired token",
     )
 
-async def get_history(user: dict = Depends(get_current_user)):
+async def get_history(user: dict = Depends(get_current_user), offset: int = 0, limit: int = 20):
     try:
-        result = supabase_admin.table("history").select("*").eq("user_id", user["id"]).order("date", desc=True).execute()
+        result = (
+            supabase_admin.table("history")
+            .select("*")
+            .eq("user_id", user["id"])
+            .order("date", desc=True)
+            .range(offset, offset + limit - 1)
+            .execute()
+        )
         return result.data
     except Exception as e:
         print(f"[DEBUG] history query failed: {e}")
