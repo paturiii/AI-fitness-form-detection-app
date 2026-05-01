@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -8,11 +8,11 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../services/api";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useQuery } from "@tanstack/react-query";
 import { colors } from "../../services/values";
 
 type MonthlyCounts = Record<string, number>;
@@ -45,18 +45,13 @@ function getLast6Months(): string[] {
 
 export default function ProfileScreen({navigation}: Props) {
   const { user, logout } = useAuth();
-  const [counts, setCounts] = useState<MonthlyCounts>({});
-  const [loading, setLoading] = useState(true);
 
-  useFocusEffect(
-    useCallback(() => {
-      setLoading(true);
-      api<{ monthly_counts: MonthlyCounts }>("/profile/monthly-count")
-        .then((data) => setCounts(data.monthly_counts ?? {}))
-        .catch(() => setCounts({}))
-        .finally(() => setLoading(false));
-    }, [])
-  );
+  const { data: profileData, isLoading: loading } = useQuery({
+    queryKey: ["profile", "monthly"],
+    queryFn: () => api<{ monthly_counts: MonthlyCounts }>("/profile/monthly-count"),
+  });
+
+  const counts = profileData?.monthly_counts ?? {};
 
   const last6 = getLast6Months();
   const chartData = last6.map((key) => ({ key, count: counts[key] ?? 0 }));

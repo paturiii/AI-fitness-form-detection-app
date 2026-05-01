@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { api } from "../../services/api";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useFocusEffect } from "@react-navigation/native";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../context/AuthContext";
 import { colors, card } from "../../services/values";
 
@@ -55,18 +55,13 @@ const summarizeSets = (sets: { reps: number; weight: number }[]) => {
 
 export default function HomeScreen({ navigation }: Props) {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
 
-  useFocusEffect(
-    useCallback(() => {
-      setLoading(true);
-      api<{ message: string; history: HistoryEntry[] }>("/home/")
-        .then((data) => setHistory(data.history ?? []))
-        .catch(() => setHistory([]))
-        .finally(() => setLoading(false));
-    }, [])
-  );
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ["home"],
+    queryFn: () => api<{ message: string; history: HistoryEntry[] }>("/home/"),
+  });
+
+  const history = data?.history ?? [];
 
   const greeting = user?.first_name
     ? `Hey, ${user.first_name}`

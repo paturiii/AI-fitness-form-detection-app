@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { api } from "../../services/api";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useFocusEffect } from "@react-navigation/native";
+import { useQuery } from "@tanstack/react-query";
 import { colors, card } from "../../services/values";
 
 type Exercises = {
@@ -46,18 +46,12 @@ const summarizeSets = (sets: { reps: number; weight: number }[]) => {
 };
 
 export default function Workout({ navigation }: Props) {
-  const [loading, setLoading] = useState(true);
-  const [workout, setWorkout] = useState<Workouts[]>([]);
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ["workouts"],
+    queryFn: () => api<{ message: string; workout: Workouts[] }>("/workouts/"),
+  });
 
-  useFocusEffect(
-    useCallback(() => {
-      setLoading(true);
-      api<{ message: string; workout: Workouts[] }>("/workouts/")
-        .then((data) => setWorkout(data.workout ?? []))
-        .catch(() => setWorkout([]))
-        .finally(() => setLoading(false));
-    }, [])
-  );
+  const workout = data?.workout ?? [];
 
   const quickStartWorkout = (item: Workouts) => {};
 

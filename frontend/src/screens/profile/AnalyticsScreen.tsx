@@ -9,7 +9,8 @@ import {
 } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { api } from "../../services/api";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
@@ -18,43 +19,31 @@ type Props = {
 };
 
 export default function AnalyticsScreen({ navigation }: Props) {
-  const [data, setData] = useState<any>(null);
   const [exercise, setExercise] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [mode, setMode] = useState<"every" | "monthly">("every");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [tooltip, setTooltip] = useState<{ x: number; y: number; value: number } | null>(null);
 
-  const getExercise = async (x: string, overrideMode?: "every" | "monthly") => {
-    if (!x.trim()) return;
-    setLoading(true);
-    setSearched(true);
-    setTooltip(null);
+  const endpoint =
+    mode === "every"
+      ? `/workouts/analytics?exercise=${encodeURIComponent(searchTerm)}`
+      : `/workouts/analytics/monthly?exercise=${encodeURIComponent(searchTerm)}`;
 
-    try {
-      const activeMode = overrideMode ?? mode;
-      const endpoint =
-        activeMode === "every"
-          ? `/workouts/analytics?exercise=${encodeURIComponent(x.trim())}`
-          : `/workouts/analytics/monthly?exercise=${encodeURIComponent(x.trim())}`;
-      const res = await api(endpoint);
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ["analytics", searchTerm, mode],
+    queryFn: () => api(endpoint),
+    enabled: !!searchTerm,
+  });
 
-      setData(res);
-    } catch (error) {
-      console.log(error);
-      setData(null);
-      
-    } finally {
-      setLoading(false);
+  const searched = !!searchTerm;
+
+  const triggerSearch = () => {
+    if (exercise.trim()) {
+      setTooltip(null);
+      setSearchTerm(exercise.trim());
     }
   };
-
-  useEffect(() => {
-    if (searched && exercise.trim()) {
-      getExercise(exercise, mode);
-    }
-  }, [mode]);
 
   const labels = data?.timeline?.map((t: any) => t.date.slice(5)) ?? [];
   const maxLabels = 6;
@@ -80,12 +69,12 @@ export default function AnalyticsScreen({ navigation }: Props) {
           placeholderTextColor="#666"
           value={exercise}
           onChangeText={setExercise}
-          onSubmitEditing={() => getExercise(exercise)}
+          onSubmitEditing={triggerSearch}
           returnKeyType="search"
         />
         <TouchableOpacity
           style={styles.searchBtn}
-          onPress={() => getExercise(exercise)}
+          onPress={triggerSearch}
         >
           <Ionicons name="search" size={20} color="#fff" />
         </TouchableOpacity>
