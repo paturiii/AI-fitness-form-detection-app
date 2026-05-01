@@ -76,7 +76,7 @@ export default function HomeScreen({ navigation }: Props) {
 
       {loading ? (
         <ActivityIndicator
-          color="#6C63FF"
+          color="#3C6E71"
           size="large"
           style={{ marginTop: 60 }}
         />

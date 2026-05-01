@@ -32,7 +32,7 @@ export default function AnalyticsScreen({ navigation }: Props) {
 
   const { data, isLoading: loading } = useQuery({
     queryKey: ["analytics", searchTerm, mode],
-    queryFn: () => api(endpoint),
+    queryFn: () => api<{ exercise: string; timeline: { date: string; e1rm: number; volume: number }[] }>(endpoint),
     enabled: !!searchTerm,
   });
 
@@ -110,7 +110,7 @@ export default function AnalyticsScreen({ navigation }: Props) {
                   {opt === "every" ? "Every Workout" : "Monthly"}
                 </Text>
                 {mode === opt && (
-                  <Ionicons name="checkmark" size={18} color="#6C63FF" />
+                  <Ionicons name="checkmark" size={18} color="#3C6E71" />
                 )}
               </TouchableOpacity>
             ))}
@@ -120,16 +120,16 @@ export default function AnalyticsScreen({ navigation }: Props) {
 
       {loading && (
         <ActivityIndicator
-          color="#6C63FF"
+          color="#3C6E71"
           size="large"
           style={{ marginTop: 60 }}
         />
       )}
 
-      {!loading && data?.timeline?.length > 0 && (
+      {!loading && (data?.timeline?.length ?? 0) > 0 && (
         <View style={styles.chartCard}>
           <Text style={styles.chartTitle}>
-            Est. 1RM — {data.exercise}
+            Est. 1RM — {data?.exercise}
           </Text>
 
           <View>
@@ -141,7 +141,7 @@ export default function AnalyticsScreen({ navigation }: Props) {
             data={{
               labels: displayLabels,
               datasets: [
-                { data: data.timeline.map((t: any) => t.e1rm) },
+                { data: data?.timeline?.map((t: any) => t.e1rm) ?? [] },
               ],
             }}
             width={Dimensions.get("window").width - 68}
@@ -156,7 +156,7 @@ export default function AnalyticsScreen({ navigation }: Props) {
               propsForDots: {
                 r: "4",
                 strokeWidth: "2",
-                stroke: "#6C63FF",
+                stroke: "#3C6E71",
               },
             }}
             onDataPointClick={({ x, y, value }: { x: number; y: number; value: number }) =>
@@ -169,7 +169,7 @@ export default function AnalyticsScreen({ navigation }: Props) {
                     position: "absolute",
                     left: tooltip.x - 30,
                     top: tooltip.y - 36,
-                    backgroundColor: "#6C63FF",
+                    backgroundColor: "#3C6E71",
                     borderRadius: 8,
                     paddingHorizontal: 10,
                     paddingVertical: 4,
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: "#6C63FF",
+    backgroundColor: "#3C6E71",
     justifyContent: "center",
     alignItems: "center",
   },

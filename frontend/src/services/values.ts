@@ -1,6 +1,6 @@
 export const colors = {
     backgroundColor: '#0f0f0f',
-    purple: '#6C63FF',
+    purple: '#3C6E71',
     green: '#4CAF50',
     inputfields: "#2E2E2E"
 }

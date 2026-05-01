@@ -17,7 +17,7 @@ export default function RootNavigator() {
           backgroundColor: "#0f0f0f",
         }}
       >
-        <ActivityIndicator size="large" color="#6C63FF" />
+        <ActivityIndicator size="large" color="#3C6E71" />
       </View>
     );
   }
