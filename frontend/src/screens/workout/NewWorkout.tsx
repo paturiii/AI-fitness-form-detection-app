@@ -6,6 +6,7 @@ import {
 import { api } from "../../services/api";
 import { Ionicons } from "@expo/vector-icons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Entypo from '@expo/vector-icons/Entypo';
 import { colors } from "../../services/values";
 import ExerciseCard, { SetEntry, ExerciseEntry } from "../../components/ExerciseCard";
@@ -15,12 +16,11 @@ type Props = {
 };
 
 export default function NewWorkout({ navigation }: Props) {
+    const queryClient = useQueryClient();
     const [muscleGroup, setMuscleGroup] = useState("");
     const [exercises, setExercises] = useState<ExerciseEntry[]>([
         { name: "", sets: [{ reps: "", weight: "" }] },
     ]);
-    const [loading, setLoading] = useState(false);
-    const [splitLoading, setSplitLoading] = useState(false);
 
     const addExercise = () => {
         setExercises([...exercises, { name: "", sets: [{ reps: "", weight: "" }] }]);
@@ -77,43 +77,41 @@ export default function NewWorkout({ navigation }: Props) {
         return map;
     };
 
-    const handleSubmit = async () => {
-        setLoading(true);
-        try {
-            await api("/workouts/upload", {
-                method: "POST",
-                body: {
-                    muscle_group: muscleGroup,
-                    exercises: buildExerciseMap(),
-                    date: new Date().toISOString().split("T")[0],
-                },
-            });
-            navigation.goBack();
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
+    const invalidateAll = () => {
+        queryClient.invalidateQueries({ queryKey: ["home"] });
+        queryClient.invalidateQueries({ queryKey: ["workouts"] });
+        queryClient.invalidateQueries({ queryKey: ["profile"] });
+        queryClient.invalidateQueries({ queryKey: ["analytics"] });
     };
 
-    const addSplit = async () => {
-        setSplitLoading(true);
-        try {
-            await api("/workouts/add-split", {
+    const uploadMutation = useMutation({
+        mutationFn: () =>
+            api("/workouts/upload", {
                 method: "POST",
                 body: {
                     muscle_group: muscleGroup,
                     exercises: buildExerciseMap(),
-                    date: new Date().toISOString().split("T")[0],
+                    date: (() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,"0")}-${String(n.getDate()).padStart(2,"0")}`; })(),
                 },
-            });
-            navigation.goBack();
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setSplitLoading(false);
-        }
-    };
+            }),
+        onSuccess: () => { invalidateAll(); navigation.goBack(); },
+    });
+
+    const splitMutation = useMutation({
+        mutationFn: () =>
+            api("/workouts/add-split", {
+                method: "POST",
+                body: {
+                    muscle_group: muscleGroup,
+                    exercises: buildExerciseMap(),
+                    date: (() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,"0")}-${String(n.getDate()).padStart(2,"0")}`; })(),
+                },
+            }),
+        onSuccess: () => { invalidateAll(); navigation.goBack(); },
+    });
+
+    const loading = uploadMutation.isPending;
+    const splitLoading = splitMutation.isPending;
 
     return (
         <SafeAreaView style={styles.container}>
@@ -153,7 +151,7 @@ export default function NewWorkout({ navigation }: Props) {
                 <View style={styles.buttonRow}>
                     <TouchableOpacity
                         style={[styles.submitBtn, loading && { opacity: 0.5 }]}
-                        onPress={handleSubmit}
+                        onPress={() => uploadMutation.mutate()}
                         disabled={loading}
                     >
                         <Text style={styles.submitText}>
@@ -163,7 +161,7 @@ export default function NewWorkout({ navigation }: Props) {
 
                     <TouchableOpacity
                         style={[styles.addSplitBtn, splitLoading && { opacity: 0.5 }]}
-                        onPress={addSplit}
+                        onPress={() => splitMutation.mutate()}
                         disabled={splitLoading}
                     >
                         <Text style={styles.submitText}>

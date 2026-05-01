@@ -8,6 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Entypo from "@expo/vector-icons/Entypo";
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { colors } from '../../services/values';
 import ExerciseCard, { SetEntry, ExerciseEntry } from "../../components/ExerciseCard";
 
@@ -17,6 +18,7 @@ type SetData = { reps: number; weight: number };
 type ExercisesParam = Record<string, { sets: SetData[] }>;
 
 export default function StartWorkout({ navigation, route }: Props) {
+    const queryClient = useQueryClient();
     const { id, muscle_group, exercises: paramExercises } = route.params as {
         id: string;
         muscle_group: string;
@@ -34,9 +36,58 @@ export default function StartWorkout({ navigation, route }: Props) {
         }))
     );
 
-    const [loading, setLoading] = useState(false);
-    const [loadEdit, setLoadEdit] = useState(false);
     const [saved, setSaved] = useState<ExercisesParam>(paramExercises);
+
+    const invalidateAll = () => {
+        queryClient.invalidateQueries({ queryKey: ["home"] });
+        queryClient.invalidateQueries({ queryKey: ["workouts"] });
+        queryClient.invalidateQueries({ queryKey: ["profile"] });
+        queryClient.invalidateQueries({ queryKey: ["analytics"] });
+    };
+
+    const uploadMutation = useMutation({
+        mutationFn: (exerciseMap: ExercisesParam) =>
+            api("/workouts/upload", {
+                method: "POST",
+                body: {
+                    muscle_group: muscleGroup,
+                    exercises: exerciseMap,
+                    date: (() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,"0")}-${String(n.getDate()).padStart(2,"0")}`; })(),
+                },
+            }),
+        onSuccess: () => {
+            invalidateAll();
+            Alert.alert("Success", "Workout logged!", [
+                { text: "OK", onPress: () => navigation.goBack() },
+            ]);
+        },
+        onError: () => Alert.alert("Error", "Failed to log workout"),
+    });
+
+    const updateSplitMutation = useMutation({
+        mutationFn: (exerciseMap: ExercisesParam) =>
+            api("/workouts/update-split", {
+                method: "PUT",
+                body: { id, muscle_group: muscleGroup, exercises: exerciseMap },
+            }),
+        onSuccess: (_data, exerciseMap) => { invalidateAll(); setSaved(exerciseMap); },
+        onError: () => Alert.alert("Error", "Failed to update split"),
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: () =>
+            api(`/workouts/delete-split/${id}`, { method: "DELETE" }),
+        onSuccess: () => {
+            invalidateAll();
+            Alert.alert("Success", "Workout Split deleted", [
+                { text: "OK", onPress: () => navigation.goBack() },
+            ]);
+        },
+        onError: () => Alert.alert("Error", "Failed to delete split"),
+    });
+
+    const loading = uploadMutation.isPending || updateSplitMutation.isPending;
+    const loadEdit = updateSplitMutation.isPending;
 
     const hasChanged = () => {
         const original = Object.entries(saved);
@@ -107,7 +158,7 @@ export default function StartWorkout({ navigation, route }: Props) {
         return map;
     };
 
-    const handleSubmit = async () => {
+    const handleSubmit = () => {
         const exerciseMap = buildExerciseMap();
 
         if (hasChanged()) {
@@ -115,92 +166,37 @@ export default function StartWorkout({ navigation, route }: Props) {
                 "Workout Modified",
                 "You changed some values. Update your saved split too?",
                 [
-                    { text: "No", onPress: () => submitWorkout(exerciseMap) },
-                    { text: "Yes", onPress: () => updateSplitAndLog(exerciseMap) },
+                    { text: "No", onPress: () => uploadMutation.mutate(exerciseMap) },
+                    { text: "Yes", onPress: async () => {
+                        await updateSplitMutation.mutateAsync(exerciseMap);
+                        uploadMutation.mutate(exerciseMap);
+                    }},
                 ]
             );
         } else {
-            await submitWorkout(exerciseMap);
+            uploadMutation.mutate(exerciseMap);
         }
     };
 
-    const updateSplitAndLog = async (exerciseMap: ExercisesParam) => {
-        setLoading(true);
-        try {
-            await api("/workouts/update-split", {
-                method: "PUT",
-                body: {
-                    id,
-                    muscle_group: muscleGroup,
-                    exercises: exerciseMap,
-                },
-            });
-        } catch {
-            Alert.alert("Error", "Failed to update split");
-        }
-        await submitWorkout(exerciseMap);
-    };
-
-    const submitWorkout = async (exerciseMap: ExercisesParam) => {
-        setLoading(true);
-        try {
-            await api("/workouts/upload", {
-                method: "POST",
-                body: {
-                    muscle_group: muscleGroup,
-                    exercises: exerciseMap,
-                    date: new Date().toISOString().split("T")[0],
-                },
-            });
-            Alert.alert("Success", "Workout logged!", [
-                { text: "OK", onPress: () => navigation.goBack() },
-            ]);
-        } catch {
-            Alert.alert("Error", "Failed to log workout");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleEdit = async () => {
+    const handleEdit = () => {
         const exerciseMap = buildExerciseMap();
-        setLoadEdit(true);
-        try {
-            await api("/workouts/update-split", {
-                method: "PUT",
-                body: {
-                    id,
-                    muscle_group: muscleGroup,
-                    exercises: exerciseMap,
-                },
-            });
-        } catch {
-            Alert.alert("Error", "Failed to update split");
-        } finally {
-            setLoadEdit(false);
-            setSaved(exerciseMap);
-        }
+        updateSplitMutation.mutate(exerciseMap);
     };
 
-    const pre_handle_delete = async () => {
-        Alert.alert("Delete", `Are you sure you want to delete your ${muscle_group} workout`, [{ text: "Yes", onPress: () => handle_delete() }, { text: "No" }]);
+    const pre_handle_delete = () => {
+        Alert.alert("Delete", `Are you sure you want to delete your ${muscle_group} workout`, [
+            { text: "Yes", onPress: () => deleteMutation.mutate() },
+            { text: "No" },
+        ]);
     };
 
-    const handle_delete = async () => {
-        try {
-            await api(`/workouts/delete-split/${id}`, {
-                method: "DELETE",
-            });
-            Alert.alert("Success", "Workout Split deleted", [{ text: "OK", onPress: () => navigation.goBack() }]);
-        } catch {
-            Alert.alert("Error", "Failed to delete split");
-        }
-    };
-
-    const handleGoBack = async () => {
+    const handleGoBack = () => {
         if (hasChanged()) {
             Alert.alert("Unsaved Changes", "You have unsaved changes. Save before leaving?", [
-                { text: "Save edits", onPress: async () => { await handleEdit(); navigation.goBack(); } },
+                { text: "Save edits", onPress: async () => {
+                    await updateSplitMutation.mutateAsync(buildExerciseMap());
+                    navigation.goBack();
+                }},
                 { text: "Discard", style: "destructive", onPress: () => navigation.goBack() },
             ]);
         } else {

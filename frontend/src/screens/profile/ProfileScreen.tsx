@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -8,11 +8,11 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../services/api";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useQuery } from "@tanstack/react-query";
 import { colors } from "../../services/values";
 
 type MonthlyCounts = Record<string, number>;
@@ -45,18 +45,13 @@ function getLast6Months(): string[] {
 
 export default function ProfileScreen({navigation}: Props) {
   const { user, logout } = useAuth();
-  const [counts, setCounts] = useState<MonthlyCounts>({});
-  const [loading, setLoading] = useState(true);
 
-  useFocusEffect(
-    useCallback(() => {
-      setLoading(true);
-      api<{ monthly_counts: MonthlyCounts }>("/profile/monthly-count")
-        .then((data) => setCounts(data.monthly_counts ?? {}))
-        .catch(() => setCounts({}))
-        .finally(() => setLoading(false));
-    }, [])
-  );
+  const { data: profileData, isLoading: loading } = useQuery({
+    queryKey: ["profile", "monthly"],
+    queryFn: () => api<{ monthly_counts: MonthlyCounts }>("/profile/monthly-count"),
+  });
+
+  const counts = profileData?.monthly_counts ?? {};
 
   const last6 = getLast6Months();
   const chartData = last6.map((key) => ({ key, count: counts[key] ?? 0 }));
@@ -101,7 +96,7 @@ export default function ProfileScreen({navigation}: Props) {
       {/* ── Stats Row ── */}
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
-          <Ionicons name="barbell-outline" size={22} color="#6C63FF" />
+          <Ionicons name="barbell-outline" size={22} color="#3C6E71" />
           <Text style={styles.statValue}>{totalWorkouts}</Text>
           <Text style={styles.statLabel}>Total</Text>
         </View>
@@ -122,7 +117,7 @@ export default function ProfileScreen({navigation}: Props) {
         <Text style={styles.chartTitle}>Monthly Workouts</Text>
 
         {loading ? (
-          <ActivityIndicator color="#6C63FF" style={{ marginVertical: 40 }} />
+          <ActivityIndicator color="#3C6E71" style={{ marginVertical: 40 }} />
         ) : (
           <View style={styles.chart}>
             {chartData.map((d) => {
@@ -138,14 +133,14 @@ export default function ProfileScreen({navigation}: Props) {
                       styles.bar,
                       {
                         height: Math.max(barHeight, 4),
-                        backgroundColor: isCurrent ? "#6C63FF" : "#3a3a3a",
+                        backgroundColor: isCurrent ? "#3C6E71" : "#3a3a3a",
                       },
                     ]}
                   />
                   <Text
                     style={[
                       styles.barLabel,
-                      isCurrent && { color: "#6C63FF", fontWeight: "700" },
+                      isCurrent && { color: "#3C6E71", fontWeight: "700" },
                     ]}
                   >
                     {formatMonth(d.key)}
@@ -161,7 +156,7 @@ export default function ProfileScreen({navigation}: Props) {
         style={styles.analyticsBtn}
         onPress={() => navigation.navigate("Analytics")}
       >
-        <Ionicons name="analytics-outline" size={20} color="#6C63FF" />
+        <Ionicons name="analytics-outline" size={20} color="#3C6E71" />
         <Text style={styles.analyticsBtnText}>Exercise Analytics</Text>
         <Ionicons name="chevron-forward" size={18} color="#444" />
       </TouchableOpacity>
@@ -198,7 +193,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: "#6C63FF",
+    backgroundColor: "#3C6E71",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 14,

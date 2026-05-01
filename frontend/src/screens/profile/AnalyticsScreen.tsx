@@ -9,7 +9,8 @@ import {
 } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { api } from "../../services/api";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
@@ -18,43 +19,31 @@ type Props = {
 };
 
 export default function AnalyticsScreen({ navigation }: Props) {
-  const [data, setData] = useState<any>(null);
   const [exercise, setExercise] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [mode, setMode] = useState<"every" | "monthly">("every");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [tooltip, setTooltip] = useState<{ x: number; y: number; value: number } | null>(null);
 
-  const getExercise = async (x: string, overrideMode?: "every" | "monthly") => {
-    if (!x.trim()) return;
-    setLoading(true);
-    setSearched(true);
-    setTooltip(null);
+  const endpoint =
+    mode === "every"
+      ? `/workouts/analytics?exercise=${encodeURIComponent(searchTerm)}`
+      : `/workouts/analytics/monthly?exercise=${encodeURIComponent(searchTerm)}`;
 
-    try {
-      const activeMode = overrideMode ?? mode;
-      const endpoint =
-        activeMode === "every"
-          ? `/workouts/analytics?exercise=${encodeURIComponent(x.trim())}`
-          : `/workouts/analytics/monthly?exercise=${encodeURIComponent(x.trim())}`;
-      const res = await api(endpoint);
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ["analytics", searchTerm, mode],
+    queryFn: () => api<{ exercise: string; timeline: { date: string; e1rm: number; volume: number }[] }>(endpoint),
+    enabled: !!searchTerm,
+  });
 
-      setData(res);
-    } catch (error) {
-      console.log(error);
-      setData(null);
-      
-    } finally {
-      setLoading(false);
+  const searched = !!searchTerm;
+
+  const triggerSearch = () => {
+    if (exercise.trim()) {
+      setTooltip(null);
+      setSearchTerm(exercise.trim());
     }
   };
-
-  useEffect(() => {
-    if (searched && exercise.trim()) {
-      getExercise(exercise, mode);
-    }
-  }, [mode]);
 
   const labels = data?.timeline?.map((t: any) => t.date.slice(5)) ?? [];
   const maxLabels = 6;
@@ -80,12 +69,12 @@ export default function AnalyticsScreen({ navigation }: Props) {
           placeholderTextColor="#666"
           value={exercise}
           onChangeText={setExercise}
-          onSubmitEditing={() => getExercise(exercise)}
+          onSubmitEditing={triggerSearch}
           returnKeyType="search"
         />
         <TouchableOpacity
           style={styles.searchBtn}
-          onPress={() => getExercise(exercise)}
+          onPress={triggerSearch}
         >
           <Ionicons name="search" size={20} color="#fff" />
         </TouchableOpacity>
@@ -121,7 +110,7 @@ export default function AnalyticsScreen({ navigation }: Props) {
                   {opt === "every" ? "Every Workout" : "Monthly"}
                 </Text>
                 {mode === opt && (
-                  <Ionicons name="checkmark" size={18} color="#6C63FF" />
+                  <Ionicons name="checkmark" size={18} color="#3C6E71" />
                 )}
               </TouchableOpacity>
             ))}
@@ -131,16 +120,16 @@ export default function AnalyticsScreen({ navigation }: Props) {
 
       {loading && (
         <ActivityIndicator
-          color="#6C63FF"
+          color="#3C6E71"
           size="large"
           style={{ marginTop: 60 }}
         />
       )}
 
-      {!loading && data?.timeline?.length > 0 && (
+      {!loading && (data?.timeline?.length ?? 0) > 0 && (
         <View style={styles.chartCard}>
           <Text style={styles.chartTitle}>
-            Est. 1RM — {data.exercise}
+            Est. 1RM — {data?.exercise}
           </Text>
 
           <View>
@@ -152,7 +141,7 @@ export default function AnalyticsScreen({ navigation }: Props) {
             data={{
               labels: displayLabels,
               datasets: [
-                { data: data.timeline.map((t: any) => t.e1rm) },
+                { data: data?.timeline?.map((t: any) => t.e1rm) ?? [] },
               ],
             }}
             width={Dimensions.get("window").width - 68}
@@ -167,7 +156,7 @@ export default function AnalyticsScreen({ navigation }: Props) {
               propsForDots: {
                 r: "4",
                 strokeWidth: "2",
-                stroke: "#6C63FF",
+                stroke: "#3C6E71",
               },
             }}
             onDataPointClick={({ x, y, value }: { x: number; y: number; value: number }) =>
@@ -180,7 +169,7 @@ export default function AnalyticsScreen({ navigation }: Props) {
                     position: "absolute",
                     left: tooltip.x - 30,
                     top: tooltip.y - 36,
-                    backgroundColor: "#6C63FF",
+                    backgroundColor: "#3C6E71",
                     borderRadius: 8,
                     paddingHorizontal: 10,
                     paddingVertical: 4,
@@ -261,7 +250,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: "#6C63FF",
+    backgroundColor: "#3C6E71",
     justifyContent: "center",
     alignItems: "center",
   },
