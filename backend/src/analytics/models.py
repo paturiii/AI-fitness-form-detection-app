@@ -14,7 +14,10 @@ def rolling_slope(df):
     model = LinearRegression()
     model.fit(X, y)
 
-    return model.coef_[0]
+    residuals = y - model.predict(X)
+    residual_std = residuals.std()
+
+    return model.coef_[0], residual_std
 
 def comparison(df):
 
@@ -33,18 +36,21 @@ def comparison(df):
 
     return recent_avg, past_avg
 
-def classify(slope, recent_avg, past_avg, mean_e1rm):
-    if slope is None or recent_avg is None:
+def classify(slope, recent_avg, past_avg, recent_std):
+    if slope is None or recent_avg is None or past_avg is None:
         return None
-    
-    threshold = mean_e1rm * 0.01
 
-    if slope > threshold and recent_avg > past_avg:
+    # noise-aware threshold
+    threshold = recent_std * 0.5
+
+    level_change = recent_avg - past_avg
+
+    if slope > threshold and level_change > threshold:
         return "+"
-    
-    elif slope < -threshold and recent_avg < past_avg:
+
+    elif slope < -threshold and level_change < -threshold:
         return "-"
-    
+
     else:
         return "~"
 
@@ -59,11 +65,10 @@ def analyze_performance(data):
     df['date'] = pd.to_datetime(df['date'])
     df = apply_ema(df)
 
-    slope = rolling_slope(df)
+    slope, residual_std = rolling_slope(df)
     recent_avg, past_avg = comparison(df)
-    mean_e1rm = df['e1rm'].mean()
 
-    status = classify(slope, recent_avg, past_avg, mean_e1rm)
+    status = classify(slope, recent_avg, past_avg, residual_std)
 
     return {
         "status" : status,
