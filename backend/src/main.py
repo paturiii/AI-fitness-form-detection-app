@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routes import auth_routes, home_routes, profile_routes, settings_routes, workout_routes, record_routes
+from .routes import auth_routes, history_routes, profile_routes, settings_routes, workout_routes, record_routes
 
 app = FastAPI(title="Accountable Workout")
 
@@ -13,7 +13,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_routes.router)
-app.include_router(home_routes.router)
+app.include_router(history_routes.router)
 app.include_router(profile_routes.router)
 app.include_router(settings_routes.router)
 app.include_router(workout_routes.router)

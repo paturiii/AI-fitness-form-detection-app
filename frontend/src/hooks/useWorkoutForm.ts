@@ -15,7 +15,7 @@ export function useWorkoutForm(initialExercises: ExerciseEntry[]) {
     const [exercises, setExercises] = useState<ExerciseEntry[]>(initialExercises);
 
     const invalidateAll = () => {
-        queryClient.invalidateQueries({ queryKey: ["home"] });
+        queryClient.invalidateQueries({ queryKey: ["history"] });
         queryClient.invalidateQueries({ queryKey: ["workouts"] });
         queryClient.invalidateQueries({ queryKey: ["profile"] });
         queryClient.invalidateQueries({ queryKey: ["analytics"] });

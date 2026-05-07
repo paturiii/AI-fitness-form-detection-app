@@ -1,7 +1,7 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
-import HomeScreenStack from "../screens/home/HomeScreenStack";
+import HistoryScreenStack from "../screens/history/HistoryScreenStack";
 import ProfileScreenStack from "../screens/profile/ProfileStack";
 import SettingsScreen from "../screens/settings/SettingsScreen";
 import WorkoutStack from "../screens/workout/WorkoutStack";
@@ -24,19 +24,17 @@ export default function AppTabs() {
         },
         tabBarIcon: ({ color, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap = "home";
-          if (route.name === "Home") iconName = "home";
+          if (route.name === "History") iconName = "time";
           else if (route.name === "Profile") iconName = "person";
-          else if (route.name === "Settings") iconName = "settings";
           else if (route.name=="Workout") iconName = "barbell";
           else if (route.name=="Record") iconName = "camera";
           return <Ionicons name={iconName} size={size} color={color} />;
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreenStack} />
-      <Tab.Screen name="Workout" component={WorkoutStack}/>
       <Tab.Screen name="Profile" component={ProfileScreenStack} />
-      <Tab.Screen name="Settings" component={SettingsScreen} />
+      <Tab.Screen name="History" component={HistoryScreenStack} />
+      <Tab.Screen name="Workout" component={WorkoutStack}/>
       <Tab.Screen name="Record" component={RecordScreen}/>
     </Tab.Navigator>
   );

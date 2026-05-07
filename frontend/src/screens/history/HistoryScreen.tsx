@@ -60,7 +60,7 @@ type HistoryPage = {
 
 const PAGE_SIZE = 20;
 
-export default function HomeScreen({ navigation }: Props) {
+export default function Hisotry({ navigation }: Props) {
   const { user } = useAuth();
 
   const {
@@ -70,9 +70,9 @@ export default function HomeScreen({ navigation }: Props) {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ["home"],
+    queryKey: ["history"],
     queryFn: ({ pageParam = 0 }) =>
-      api<HistoryPage>(`/home/?offset=${pageParam}&limit=${PAGE_SIZE}`),
+      api<HistoryPage>(`/history/?offset=${pageParam}&limit=${PAGE_SIZE}`),
     initialPageParam: 0,
     getNextPageParam: (lastPage, _allPages, lastPageParam) =>
       lastPage.has_more ? lastPageParam + PAGE_SIZE : undefined,
