@@ -37,6 +37,7 @@ export default function StartWorkout({ navigation, route }: Props) {
     );
 
     const [saved, setSaved] = useState<ExercisesParam>(paramExercises);
+    const [savedMuscleGroup, setSavedMuscleGroup] = useState(muscle_group);
 
     const invalidateAll = () => {
         queryClient.invalidateQueries({ queryKey: ["home"] });
@@ -70,7 +71,7 @@ export default function StartWorkout({ navigation, route }: Props) {
                 method: "PUT",
                 body: { id, muscle_group: muscleGroup, exercises: exerciseMap },
             }),
-        onSuccess: (_data, exerciseMap) => { invalidateAll(); setSaved(exerciseMap); },
+        onSuccess: (_data, exerciseMap) => { invalidateAll(); setSaved(exerciseMap); setSavedMuscleGroup(muscleGroup); },
         onError: () => Alert.alert("Error", "Failed to update split"),
     });
 
@@ -90,6 +91,7 @@ export default function StartWorkout({ navigation, route }: Props) {
     const loadEdit = updateSplitMutation.isPending;
 
     const hasChanged = () => {
+        if (muscleGroup !== savedMuscleGroup) return true;
         const original = Object.entries(saved);
         if (exercises.length !== original.length) return true;
         return exercises.some((ex, i) => {
