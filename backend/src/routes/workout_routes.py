@@ -149,7 +149,7 @@ async def add_split(workout: WorkoutUpload, user: dict = Depends(get_current_use
 
 
 @router.get("/analytics")
-def get_exercises_analytics(exercise: str, user: dict = Depends(get_current_user)):
+async def get_exercises_analytics(exercise: str, user: dict = Depends(get_current_user)):
     search_tokens = normalize(exercise)
     res = get_raw_data(user)
     data = get_organized_data(res, search_tokens, exercise)
@@ -158,7 +158,7 @@ def get_exercises_analytics(exercise: str, user: dict = Depends(get_current_user
 
 
 @router.get('/analytics/monthly')
-def monthly_stats(exercise: str, user: dict = Depends(get_current_user)):
+async def monthly_stats(exercise: str, user: dict = Depends(get_current_user)):
     search_tokens = normalize(exercise)
     raw = get_organized_data(get_raw_data(user), search_tokens, exercise)
 

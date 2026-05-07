@@ -14,7 +14,7 @@ async def get_profile(user: dict = Depends(get_current_user)):
     }
 
 @router.get("/monthly-count")
-def get_entries(user: dict = Depends(get_current_user)):
+async def get_entries(user: dict = Depends(get_current_user)):
     res = (
         supabase_admin.table("history")
         .select("date")

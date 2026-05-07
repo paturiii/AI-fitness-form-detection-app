@@ -5,7 +5,7 @@ import HistoryScreenStack from "../screens/history/HistoryScreenStack";
 import ProfileScreenStack from "../screens/profile/ProfileStack";
 import SettingsScreen from "../screens/settings/SettingsScreen";
 import WorkoutStack from "../screens/workout/WorkoutStack";
-import RecordScreen from "../screens/record/RecordScreen";
+import RecordStack from "../screens/record/RecordStack";
 
 const Tab = createBottomTabNavigator();
 
@@ -35,7 +35,7 @@ export default function AppTabs() {
       <Tab.Screen name="Profile" component={ProfileScreenStack} />
       <Tab.Screen name="History" component={HistoryScreenStack} />
       <Tab.Screen name="Workout" component={WorkoutStack}/>
-      <Tab.Screen name="Record" component={RecordScreen}/>
+      <Tab.Screen name="Record" component={RecordStack}/>
     </Tab.Navigator>
   );
 }
