@@ -8,17 +8,14 @@ import { Ionicons } from "@expo/vector-icons";
 import Entypo from "@expo/vector-icons/Entypo";
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { colors } from '../../services/values';
-import ExerciseCard, { SetEntry, ExerciseEntry } from "../../components/ExerciseCard";
+import ExerciseCard from "../../components/ExerciseCard";
+import { useWorkoutForm, ExercisesParam, getTodayDate } from "../../hooks/useWorkoutForm";
 
 type Props = NativeStackScreenProps<any, "StartWorkout">;
 
-type SetData = { reps: number; weight: number };
-type ExercisesParam = Record<string, { sets: SetData[] }>;
-
 export default function StartWorkout({ navigation, route }: Props) {
-    const queryClient = useQueryClient();
     const { id, muscle_group, exercises: paramExercises } = route.params as {
         id: string;
         muscle_group: string;
@@ -26,7 +23,13 @@ export default function StartWorkout({ navigation, route }: Props) {
     };
 
     const [muscleGroup, setMuscleGroup] = useState(muscle_group);
-    const [exercises, setExercises] = useState<ExerciseEntry[]>(
+    const [saved, setSaved] = useState<ExercisesParam>(paramExercises);
+    const [savedMuscleGroup, setSavedMuscleGroup] = useState(muscle_group);
+
+    const {
+        exercises, invalidateAll, addExercise, removeExercise,
+        updateExerciseName, addSet, removeSet, updateSet, buildExerciseMap,
+    } = useWorkoutForm(
         Object.entries(paramExercises).map(([name, details]) => ({
             name,
             sets: details.sets.map(s => ({
@@ -36,16 +39,6 @@ export default function StartWorkout({ navigation, route }: Props) {
         }))
     );
 
-    const [saved, setSaved] = useState<ExercisesParam>(paramExercises);
-    const [savedMuscleGroup, setSavedMuscleGroup] = useState(muscle_group);
-
-    const invalidateAll = () => {
-        queryClient.invalidateQueries({ queryKey: ["home"] });
-        queryClient.invalidateQueries({ queryKey: ["workouts"] });
-        queryClient.invalidateQueries({ queryKey: ["profile"] });
-        queryClient.invalidateQueries({ queryKey: ["analytics"] });
-    };
-
     const uploadMutation = useMutation({
         mutationFn: (exerciseMap: ExercisesParam) =>
             api("/workouts/upload", {
@@ -53,7 +46,7 @@ export default function StartWorkout({ navigation, route }: Props) {
                 body: {
                     muscle_group: muscleGroup,
                     exercises: exerciseMap,
-                    date: (() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,"0")}-${String(n.getDate()).padStart(2,"0")}`; })(),
+                    date: getTodayDate(),
                 },
             }),
         onSuccess: () => {
@@ -105,61 +98,6 @@ export default function StartWorkout({ navigation, route }: Props) {
         });
     };
 
-    const addExercise = () => {
-        setExercises([...exercises, { name: "", sets: [{ reps: "", weight: "" }] }]);
-    };
-
-    const removeExercise = (index: number) => {
-        setExercises(exercises.filter((_, i) => i !== index));
-    };
-
-    const updateExerciseName = (index: number, name: string) => {
-        const updated = [...exercises];
-        updated[index] = { ...updated[index], name };
-        setExercises(updated);
-    };
-
-    const addSet = (exIndex: number) => {
-        const updated = [...exercises];
-        updated[exIndex] = {
-            ...updated[exIndex],
-            sets: [...updated[exIndex].sets, { reps: "", weight: "" }],
-        };
-        setExercises(updated);
-    };
-
-    const removeSet = (exIndex: number, setIndex: number) => {
-        const updated = [...exercises];
-        updated[exIndex] = {
-            ...updated[exIndex],
-            sets: updated[exIndex].sets.filter((_, i) => i !== setIndex),
-        };
-        setExercises(updated);
-    };
-
-    const updateSet = (exIndex: number, setIndex: number, field: keyof SetEntry, value: string) => {
-        const updated = [...exercises];
-        const sets = [...updated[exIndex].sets];
-        sets[setIndex] = { ...sets[setIndex], [field]: value };
-        updated[exIndex] = { ...updated[exIndex], sets };
-        setExercises(updated);
-    };
-
-    const buildExerciseMap = (): ExercisesParam => {
-        const map: ExercisesParam = {};
-        for (const ex of exercises) {
-            if (ex.name.trim()) {
-                map[ex.name.trim()] = {
-                    sets: ex.sets.map(s => ({
-                        reps: parseInt(s.reps) || 0,
-                        weight: parseInt(s.weight) || 0,
-                    })),
-                };
-            }
-        }
-        return map;
-    };
-
     const handleSubmit = () => {
         const exerciseMap = buildExerciseMap();
 
@@ -181,8 +119,7 @@ export default function StartWorkout({ navigation, route }: Props) {
     };
 
     const handleEdit = () => {
-        const exerciseMap = buildExerciseMap();
-        updateSplitMutation.mutate(exerciseMap);
+        updateSplitMutation.mutate(buildExerciseMap());
     };
 
     const pre_handle_delete = () => {
@@ -246,27 +183,30 @@ export default function StartWorkout({ navigation, route }: Props) {
                     <Text style={styles.addBtnText}>Add Exercise</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                    style={[styles.submitBtn, loading && { opacity: 0.5 }]}
-                    onPress={handleSubmit}
-                    disabled={loading}
-                >
-                    <Text style={styles.submitText}>
-                        {loading ? "Logging..." : "Log Workout"}
-                    </Text>
-                </TouchableOpacity>
+                <View style={styles.rowContainer}>
+                    {hasChanged() && (
+                        <TouchableOpacity
+                            style={styles.saveChanges}
+                            onPress={() => handleEdit()}
+                            disabled={loadEdit}
+                        >
+                            <Text style={styles.submitText}>
+                                {loadEdit ? "Saving..." : "Save Changes"}
+                            </Text>
+                        </TouchableOpacity>
+                    )}
 
-                {hasChanged() && (
                     <TouchableOpacity
-                        style={styles.editBtn}
-                        onPress={() => handleEdit()}
-                        disabled={loadEdit}
+                        style={[styles.submitBtn, loading && { opacity: 0.5 }]}
+                        onPress={handleSubmit}
+                        disabled={loading}
                     >
-                        <Text style={[styles.submitText, { color: '#4CAF50' }]}>
-                            {loadEdit ? "Saving..." : "Save Changes"}
+                        <Text style={styles.submitText}>
+                            {loading ? "Logging..." : "Log Workout"}
                         </Text>
                     </TouchableOpacity>
-                )}
+                </View>
+
             </ScrollView>
         </SafeAreaView>
     );
@@ -313,6 +253,7 @@ const styles = StyleSheet.create({
     },
 
     submitBtn: {
+        flex: 1,
         backgroundColor: colors.purple,
         borderRadius: 12,
         padding: 16,
@@ -325,9 +266,12 @@ const styles = StyleSheet.create({
         fontWeight: "600",
     },
 
-    editBtn: {
+    saveChanges: {
+        flex: 1,
         alignItems: 'center',
-        marginTop: 16,
+        padding: 16,
+        backgroundColor: colors.green,
+        borderRadius: 12,
     },
 
     iconContainer: {
@@ -335,5 +279,10 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: "center",
         justifyContent: "space-between",
+    },
+
+    rowContainer: {
+        flexDirection: 'row',
+        gap: 15,
     },
 });

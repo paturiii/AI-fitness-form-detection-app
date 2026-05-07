@@ -6,83 +6,23 @@ import {
 import { api } from "../../services/api";
 import { Ionicons } from "@expo/vector-icons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import Entypo from '@expo/vector-icons/Entypo';
 import { colors } from "../../services/values";
-import ExerciseCard, { SetEntry, ExerciseEntry } from "../../components/ExerciseCard";
+import ExerciseCard from "../../components/ExerciseCard";
+import { useWorkoutForm, getTodayDate } from "../../hooks/useWorkoutForm";
 
 type Props = {
     navigation: NativeStackNavigationProp<any>;
 };
 
 export default function NewWorkout({ navigation }: Props) {
-    const queryClient = useQueryClient();
     const [muscleGroup, setMuscleGroup] = useState("");
-    const [exercises, setExercises] = useState<ExerciseEntry[]>([
-        { name: "", sets: [{ reps: "", weight: "" }] },
-    ]);
 
-    const addExercise = () => {
-        setExercises([...exercises, { name: "", sets: [{ reps: "", weight: "" }] }]);
-    };
-
-    const removeExercise = (index: number) => {
-        setExercises(exercises.filter((_, i) => i !== index));
-    };
-
-    const updateExerciseName = (index: number, name: string) => {
-        const updated = [...exercises];
-        updated[index] = { ...updated[index], name };
-        setExercises(updated);
-    };
-
-    const addSet = (exIndex: number) => {
-        const updated = [...exercises];
-        updated[exIndex] = {
-            ...updated[exIndex],
-            sets: [...updated[exIndex].sets, { reps: "", weight: "" }],
-        };
-        setExercises(updated);
-    };
-
-    const removeSet = (exIndex: number, setIndex: number) => {
-        const updated = [...exercises];
-        updated[exIndex] = {
-            ...updated[exIndex],
-            sets: updated[exIndex].sets.filter((_, i) => i !== setIndex),
-        };
-        setExercises(updated);
-    };
-
-    const updateSet = (exIndex: number, setIndex: number, field: keyof SetEntry, value: string) => {
-        const updated = [...exercises];
-        const sets = [...updated[exIndex].sets];
-        sets[setIndex] = { ...sets[setIndex], [field]: value };
-        updated[exIndex] = { ...updated[exIndex], sets };
-        setExercises(updated);
-    };
-
-    const buildExerciseMap = () => {
-        const map: Record<string, { sets: { reps: number; weight: number }[] }> = {};
-        for (const ex of exercises) {
-            if (ex.name.trim()) {
-                map[ex.name.trim()] = {
-                    sets: ex.sets.map(s => ({
-                        reps: parseInt(s.reps) || 0,
-                        weight: parseInt(s.weight) || 0,
-                    })),
-                };
-            }
-        }
-        return map;
-    };
-
-    const invalidateAll = () => {
-        queryClient.invalidateQueries({ queryKey: ["home"] });
-        queryClient.invalidateQueries({ queryKey: ["workouts"] });
-        queryClient.invalidateQueries({ queryKey: ["profile"] });
-        queryClient.invalidateQueries({ queryKey: ["analytics"] });
-    };
+    const {
+        exercises, invalidateAll, addExercise, removeExercise,
+        updateExerciseName, addSet, removeSet, updateSet, buildExerciseMap,
+    } = useWorkoutForm([{ name: "", sets: [{ reps: "", weight: "" }] }]);
 
     const uploadMutation = useMutation({
         mutationFn: () =>
@@ -91,7 +31,7 @@ export default function NewWorkout({ navigation }: Props) {
                 body: {
                     muscle_group: muscleGroup,
                     exercises: buildExerciseMap(),
-                    date: (() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,"0")}-${String(n.getDate()).padStart(2,"0")}`; })(),
+                    date: getTodayDate(),
                 },
             }),
         onSuccess: () => { invalidateAll(); navigation.goBack(); },
@@ -104,7 +44,7 @@ export default function NewWorkout({ navigation }: Props) {
                 body: {
                     muscle_group: muscleGroup,
                     exercises: buildExerciseMap(),
-                    date: (() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,"0")}-${String(n.getDate()).padStart(2,"0")}`; })(),
+                    date: getTodayDate(),
                 },
             }),
         onSuccess: () => { invalidateAll(); navigation.goBack(); },
