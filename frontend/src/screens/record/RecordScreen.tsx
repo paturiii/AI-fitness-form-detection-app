@@ -10,8 +10,6 @@ import {
   Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import * as ImagePicker from "expo-image-picker";
-import * as Device from "expo-device";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useMutation } from "@tanstack/react-query";
 import { colors, card } from "../../services/values";
@@ -27,55 +25,6 @@ export default function RecordScreen() {
   const [videoUri, setVideoUri] = useState<string | null>(null);
   const [exercise, setExercise] = useState<string>("squat");
 
-  const pickVideo = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert("Permission Required", "Allow access to your photo library to select a video.");
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["videos"],
-      quality: 1,
-      videoMaxDuration: 120,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      setVideoUri(result.assets[0].uri);
-    }
-  };
-
-  const recordVideo = async () => {
-    if (!Device.isDevice) {
-      Alert.alert(
-        "Camera unavailable",
-        "The simulator and many emulators have no camera. Use “From Library” or run the app on a physical device to record.",
-      );
-      return;
-    }
-
-    try {
-      const permission = await ImagePicker.requestCameraPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert("Permission Required", "Allow camera access to record a video.");
-        return;
-      }
-
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ["videos"],
-        quality: 1,
-        videoMaxDuration: 120,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        setVideoUri(result.assets[0].uri);
-      }
-    } catch (e) {
-      const message = e instanceof Error ? e.message : "Could not open the camera.";
-      Alert.alert("Camera error", message);
-    }
-  };
-
 
   return (
     <View style={styles.container}>
@@ -86,7 +35,7 @@ export default function RecordScreen() {
 
       {/* Video Preview / Picker */}
       {videoUri ? (
-        <TouchableOpacity style={styles.previewContainer} onPress={pickVideo}>
+        <TouchableOpacity style={styles.previewContainer}>
           <Image source={{ uri: videoUri }} style={styles.preview} />
           <View style={styles.previewOverlay}>
             <Ionicons name="refresh" size={28} color="white" />
@@ -96,19 +45,15 @@ export default function RecordScreen() {
       ) : (
         <View style={styles.pickerRow}>
           <TouchableOpacity
-            style={[styles.pickerCard, !Device.isDevice && styles.pickerCardDisabled]}
-            onPress={() => void recordVideo()}
+            style={[styles.pickerCard, styles.pickerCardDisabled]}
           >
             <View style={styles.pickerIconCircle}>
               <Ionicons name="videocam" size={32} color="white" />
             </View>
             <Text style={styles.pickerLabel}>Record</Text>
-            {!Device.isDevice ? (
-              <Text style={styles.pickerHint}>Device only</Text>
-            ) : null}
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.pickerCard} onPress={pickVideo}>
+          <TouchableOpacity style={styles.pickerCard}>
             <View style={styles.pickerIconCircle}>
               <Ionicons name="folder-open" size={32} color="white" />
             </View>
@@ -130,7 +75,7 @@ export default function RecordScreen() {
             >
               <Ionicons
                 name={ex.icon}
-                size={18}
+                size={15}
                 color={active ? "white" : "#999"}
               />
               <Text
@@ -258,7 +203,7 @@ const styles = StyleSheet.create({
   },
   exerciseChipText: {
     color: "#999",
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "600",
   },
   exerciseChipTextActive: {

@@ -51,3 +51,7 @@ async def logout(user: dict = Depends(get_current_user)):
 @router.get("/me")
 async def me(user: dict = Depends(get_current_user)):
     return user
+
+@router.get('/refresh')
+async def refresh_token(newAccess, refresh_token):
+    pass
