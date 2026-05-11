@@ -1,7 +1,14 @@
 from fastapi import APIRouter, HTTPException, Depends, status
-from ..schemas import SignUpRequest, LoginRequest, AuthResponse, MessageResponse
-from ..supabase_client import supabase
-from ..dependencies import get_current_user
+from fastapi.security import HTTPAuthorizationCredentials
+from ..schemas import (
+    SignUpRequest,
+    LoginRequest,
+    RefreshTokenRequest,
+    AuthResponse,
+    MessageResponse,
+)
+from ..supabase_client import supabase, supabase_admin
+from ..dependencies import bearer_scheme, get_current_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -44,7 +51,15 @@ async def login(body: LoginRequest):
 
 
 @router.post("/logout", response_model=MessageResponse)
-async def logout(user: dict = Depends(get_current_user)):
+@router.post("/logout", response_model=MessageResponse)
+async def logout(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    _user: dict = Depends(get_current_user),
+):
+    try:
+        supabase_admin.auth.admin.sign_out(credentials.credentials, "global")
+    except Exception:
+        pass
     return MessageResponse(message="Logged out successfully")
 
 
@@ -52,6 +67,26 @@ async def logout(user: dict = Depends(get_current_user)):
 async def me(user: dict = Depends(get_current_user)):
     return user
 
-@router.get('/refresh')
-async def refresh_token(newAccess, refresh_token):
-    pass
+
+@router.post("/refresh", response_model=AuthResponse)
+async def refresh_session(body: RefreshTokenRequest):
+    try:
+        res = supabase.auth.refresh_session(body.refresh_token)
+        session = res.session
+        if not session:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Refresh failed",
+            )
+        return AuthResponse(
+            access_token=session.access_token,
+            refresh_token=session.refresh_token,
+            user={"id": res.user.id, "email": res.user.email},
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(e),
+        )
