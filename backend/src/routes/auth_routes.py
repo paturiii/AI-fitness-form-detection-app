@@ -51,7 +51,6 @@ async def login(body: LoginRequest):
 
 
 @router.post("/logout", response_model=MessageResponse)
-@router.post("/logout", response_model=MessageResponse)
 async def logout(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     _user: dict = Depends(get_current_user),
