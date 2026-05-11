@@ -32,7 +32,11 @@ export default function AnalyticsScreen({ navigation }: Props) {
 
   const { data, isLoading: loading } = useQuery({
     queryKey: ["analytics", searchTerm, mode],
-    queryFn: () => api<{ exercise: string; timeline: { date: string; e1rm: number; volume: number }[] }>(endpoint),
+    queryFn: () => api<{
+      exercise: string;
+      timeline: { date: string; e1rm: number; volume: number }[];
+      analysis?: { status: string; slope: number } | { Message: string };
+    }>(endpoint),
     enabled: !!searchTerm,
   });
 
@@ -132,10 +136,47 @@ export default function AnalyticsScreen({ navigation }: Props) {
             Est. 1RM — {data?.exercise}
           </Text>
 
-          <View>
-
-
-          </View>
+          {mode === "every" && data?.analysis && (
+            "status" in data.analysis && data.analysis.status ? (
+              <View style={styles.trendRow}>
+                <View style={[
+                  styles.trendBadge,
+                  { backgroundColor:
+                      data.analysis.status === "+" ? "#1B4332" :
+                      data.analysis.status === "-" ? "#4A1520" : "#2a2a2a"
+                  },
+                ]}>
+                  <Ionicons
+                    name={
+                      data.analysis.status === "+" ? "trending-up" :
+                      data.analysis.status === "-" ? "trending-down" : "remove"
+                    }
+                    size={16}
+                    color={
+                      data.analysis.status === "+" ? "#52B788" :
+                      data.analysis.status === "-" ? "#E5383B" : "#888"
+                    }
+                  />
+                  <Text style={[
+                    styles.trendText,
+                    { color:
+                        data.analysis.status === "+" ? "#52B788" :
+                        data.analysis.status === "-" ? "#E5383B" : "#888"
+                    },
+                  ]}>
+                    {data.analysis.status === "+" ? "Growing" :
+                     data.analysis.status === "-" ? "Declining" : "Plateau"}
+                  </Text>
+                </View>
+                <Text style={styles.slopeText}>
+                  {data.analysis.slope > 0 ? "+" : ""}
+                  {data.analysis.slope.toFixed(2)} / session
+                </Text>
+              </View>
+            ) : "Message" in data.analysis ? (
+              <Text style={styles.trendNotEnough}>Need 6+ sessions to show trend</Text>
+            ) : null
+          )}
 
           <LineChart
             data={{
@@ -263,6 +304,37 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     color: "#fff",
+    marginBottom: 12,
+    marginLeft: 4,
+  },
+  trendRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+    marginHorizontal: 4,
+  },
+  trendBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  trendText: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  slopeText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#666",
+  },
+  trendNotEnough: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#555",
     marginBottom: 12,
     marginLeft: 4,
   },

@@ -4,6 +4,7 @@ from ..supabase_client import supabase_admin
 from ..dependencies import get_current_user, get_workouts
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from ..analytics.models import analyze_performance
 
 router = APIRouter(prefix="/workouts", tags=["workouts"])
 
@@ -34,7 +35,7 @@ def get_raw_data(user):
 
     return res.data
 
-def get_organized_data(data, search_tokens, exercise):
+def get_organized_data(data, search_tokens):
 
     org = []
     
@@ -152,15 +153,17 @@ async def add_split(workout: WorkoutUpload, user: dict = Depends(get_current_use
 async def get_exercises_analytics(exercise: str, user: dict = Depends(get_current_user)):
     search_tokens = normalize(exercise)
     res = get_raw_data(user)
-    data = get_organized_data(res, search_tokens, exercise)
+    data = get_organized_data(res, search_tokens)
 
-    return { "exercise": exercise, 'timeline': data}
+    analysis = analyze_performance(data)
 
+    return { "exercise": exercise, 'timeline': data[-12:], "analysis": analysis}
+    
 
 @router.get('/analytics/monthly')
 async def monthly_stats(exercise: str, user: dict = Depends(get_current_user)):
     search_tokens = normalize(exercise)
-    raw = get_organized_data(get_raw_data(user), search_tokens, exercise)
+    raw = get_organized_data(get_raw_data(user), search_tokens)
 
     buckets: dict[str, dict] = {}
     for entry in raw:
