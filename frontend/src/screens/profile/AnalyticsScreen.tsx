@@ -137,7 +137,7 @@ export default function AnalyticsScreen({ navigation }: Props) {
           </Text>
 
           {mode === "every" && data?.analysis && (
-            "status" in data.analysis && data.analysis.status ? (
+            "status" in data.analysis && data.analysis.status != null ? (
               <View style={styles.trendRow}>
                 <View style={[
                   styles.trendBadge,
@@ -165,12 +165,16 @@ export default function AnalyticsScreen({ navigation }: Props) {
                     },
                   ]}>
                     {data.analysis.status === "+" ? "Growing" :
-                     data.analysis.status === "-" ? "Declining" : "Plateau"}
+                     data.analysis.status === "-" ? "Declining" :
+                     data.analysis.status === "^" ? "Plateau" : "Unknown"}
                   </Text>
                 </View>
                 <Text style={styles.slopeText}>
-                  {data.analysis.slope > 0 ? "+" : ""}
-                  {data.analysis.slope.toFixed(2)} / session
+                  {typeof data.analysis.slope === "number" && data.analysis.slope > 0 ? "+" : ""}
+                  {typeof data.analysis.slope === "number"
+                    ? data.analysis.slope.toFixed(2)
+                    : "—"}
+                  {" "}/ session
                 </Text>
               </View>
             ) : "Message" in data.analysis ? (
