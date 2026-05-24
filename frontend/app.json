@@ -27,7 +27,16 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-video",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow access to your photos to upload videos.",
+          "cameraPermission": "Allow access to your camera to record workout videos.",
+          "microphonePermission": "Allow access to your microphone to record workout videos."
+        }
+      ]
     ]
   }
 }

@@ -1,7 +1,9 @@
 import * as SecureStore from "expo-secure-store";
 
 // const API_URL = "http://10.0.2.2:8000"; // Android emulator → host
-const API_URL = "http://localhost:8000"; // iOS simulator → host
+export const API_BASE_URL = "http://localhost:8000"; // iOS simulator → host
+
+const API_URL = API_BASE_URL;
 
 let refreshInFlight: Promise<boolean> | null = null;
 
