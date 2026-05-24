@@ -46,3 +46,5 @@ myenv/
 __pycache__/
 .env
 .DS_Store
+.mp4
+.task
