@@ -9,11 +9,13 @@ Unlike generic fitness apps, SmartForm focuses on **objective, explainable feedb
 ## 🚨 Problem
 
 Most beginners (and many intermediates) perform exercises with poor form due to:
+
 - Lack of coaching
 - No immediate feedback
 - No objective way to review reps
 
 Bad form leads to:
+
 - Slower progress
 - Increased injury risk
 - Reinforcing incorrect movement patterns
@@ -23,6 +25,7 @@ Bad form leads to:
 ## ✅ Solution
 
 SmartForm allows users to:
+
 1. Record workout videos
 2. Automatically detect reps
 3. Classify reps as good or bad
@@ -68,6 +71,7 @@ Feedback is generated using **pose estimation + rule-based biomechanics**, ensur
 ---
 
 ### Frontend (Mobile)
+
 - **React Native (Expo SDK 55)**
 - **TypeScript**
 - `expo-image-picker` (record / pick workout videos)
@@ -75,11 +79,11 @@ Feedback is generated using **pose estimation + rule-based biomechanics**, ensur
 - `expo-secure-store` (auth token storage)
 - **TanStack Query**
 - Native `fetch` (see `src/services/api.ts`)
-- Minimal UI-first design (function > aesthetics)
 
 ---
 
 ### Backend
+
 - **Python**
 - **FastAPI** + **Uvicorn**
 - **Supabase** (auth + Postgres tables: `profile`, `history`, `workout_split`, ...)
@@ -88,6 +92,7 @@ Feedback is generated using **pose estimation + rule-based biomechanics**, ensur
 ---
 
 ### Computer Vision & Analysis
+
 - **MediaPipe Pose**
 - **NumPy**
 - **OpenCV**
@@ -162,13 +167,16 @@ Edit `frontend/src/services/api.ts` and set the `API_URL`:
 
 ### `/record` API
 
-| Method | Path | Notes |
-| --- | --- | --- |
-| `POST` | `/record/upload-video?exercise=<key>` | Multipart `video=<file>`. Bearer-authed. Currently supports `exercise=push_up`. |
-| `GET`  | `/record/video/{analysis_id}` | One-shot stream of the annotated MP4; the file is removed from disk once playback finishes. |
+
+| Method | Path                                  | Notes                                                                                       |
+| ------ | ------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `POST` | `/record/upload-video?exercise=<key>` | Multipart `video=<file>`. Bearer-authed. Currently supports `exercise=push_up`.             |
+| `GET`  | `/record/video/{analysis_id}`         | One-shot stream of the annotated MP4; the file is removed from disk once playback finishes. |
+
 
 ### Filming guidelines (push-ups)
 
 - Film the **right side** of the body in landscape — the analyzer tracks the right-side landmarks only.
 - Keep the whole body in frame from shoulder to ankle.
 - Single subject per clip. Recordings from `RecordScreen` are capped at 60 seconds.
+
