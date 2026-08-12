@@ -57,3 +57,4 @@ processed_videos/
 *Dockerfile
 .dockerignore
 **/Makefile
+docker-compose.yml
