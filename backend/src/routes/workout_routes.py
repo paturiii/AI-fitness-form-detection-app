@@ -81,7 +81,6 @@ def get_organized_data(data, search_tokens):
 async def get_workout_list(user: dict = Depends(get_current_user), workouts: list = Depends(get_workouts)):
     return {
         "screen": "workouts",
-        "user": user,
         "message": f"Your Workout Splits",
         "workout": workouts,
     }

@@ -5,6 +5,7 @@ import {
   StyleSheet,
   FlatList,
   ActivityIndicator,
+  TouchableOpacity,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { api } from "../../services/api";
@@ -24,6 +25,7 @@ type Exercises = {
 };
 
 type HistoryEntry = {
+  id: string;
   date: string;
   muscle_group: string;
   exercises: Exercises;
@@ -100,7 +102,7 @@ export default function Hisotry({ navigation }: Props) {
       ) : (
         <FlatList
           data={history}
-          keyExtractor={(_, index) => index.toString()}
+          keyExtractor={(item, index) => item.id ?? index.toString()}
           style={styles.list}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
@@ -112,25 +114,38 @@ export default function Hisotry({ navigation }: Props) {
             ) : null
           }
           renderItem={({ item }) => (
-            <View style={styles.card}>
-              <View style={styles.cardHeader}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.muscleGroup}>{item.muscle_group}</Text>
-                  <Text style={styles.date}>{formatDate(item.date)}</Text>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              delayLongPress={300}
+              onLongPress={() =>
+                navigation.navigate("EditHistory", {
+                  id: item.id,
+                  muscle_group: item.muscle_group,
+                  date: item.date,
+                  exercises: item.exercises,
+                })
+              }
+            >
+              <View style={styles.card}>
+                <View style={styles.cardHeader}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.muscleGroup}>{item.muscle_group}</Text>
+                    <Text style={styles.date}>{formatDate(item.date)}</Text>
+                  </View>
+                </View>
+                <View style={styles.divider} />
+                <View style={styles.exerciseList}>
+                  {Object.entries(item.exercises).map(([name, details]) => (
+                    <View key={name} style={styles.exerciseRow}>
+                      <Text style={styles.exerciseName}>{name}</Text>
+                      <Text style={styles.exerciseDetail}>
+                        {summarizeSets(details.sets)}
+                      </Text>
+                    </View>
+                  ))}
                 </View>
               </View>
-              <View style={styles.divider} />
-              <View style={styles.exerciseList}>
-                {Object.entries(item.exercises).map(([name, details]) => (
-                  <View key={name} style={styles.exerciseRow}>
-                    <Text style={styles.exerciseName}>{name}</Text>
-                    <Text style={styles.exerciseDetail}>
-                      {summarizeSets(details.sets)}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
+            </TouchableOpacity>
           )}
           ListEmptyComponent={
             <View style={styles.emptyState}>
