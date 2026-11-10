@@ -23,7 +23,12 @@ export default function AnalyticsScreen({ navigation }: Props) {
   const [searchTerm, setSearchTerm] = useState("");
   const [mode, setMode] = useState<"every" | "monthly">("every");
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [tooltip, setTooltip] = useState<{ x: number; y: number; value: number } | null>(null);
+  const [tooltip, setTooltip] = useState<{
+    x: number;
+    y: number;
+    value: number;
+    date: string;
+  } | null>(null);
 
   const endpoint =
     mode === "every"
@@ -204,8 +209,23 @@ export default function AnalyticsScreen({ navigation }: Props) {
                 stroke: "#3C6E71",
               },
             }}
-            onDataPointClick={({ x, y, value }: { x: number; y: number; value: number }) =>
-              setTooltip({ x, y, value })
+            onDataPointClick={({
+              x,
+              y,
+              value,
+              index,
+            }: {
+              x: number;
+              y: number;
+              value: number;
+              index: number;
+            }) =>
+              setTooltip({
+                x,
+                y,
+                value,
+                date: data?.timeline?.[index]?.date ?? "",
+              })
             }
             decorator={() =>
               tooltip ? (
@@ -213,16 +233,18 @@ export default function AnalyticsScreen({ navigation }: Props) {
                   style={{
                     position: "absolute",
                     left: tooltip.x - 30,
-                    top: tooltip.y - 36,
+                    top: tooltip.y - 52,
                     backgroundColor: "#3C6E71",
                     borderRadius: 8,
                     paddingHorizontal: 10,
                     paddingVertical: 4,
+                    minWidth: 60,
                   }}
                 >
-                  <Text style={{ color: "#fff", fontSize: 13, fontWeight: "700", textAlign: "center" }}>
+                  <Text style={styles.tooltipValue}>
                     {Math.round(tooltip.value)}
                   </Text>
+                  <Text style={styles.tooltipDate}>{tooltip.date}</Text>
                 </View>
               ) : null
             }
@@ -341,6 +363,19 @@ const styles = StyleSheet.create({
     color: "#555",
     marginBottom: 12,
     marginLeft: 4,
+  },
+  tooltipValue: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  tooltipDate: {
+    color: "#d7eeee",
+    fontSize: 11,
+    fontWeight: "500",
+    marginTop: 2,
+    textAlign: "center",
   },
   emptyState: {
     alignItems: "center",
