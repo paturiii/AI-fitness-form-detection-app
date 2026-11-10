@@ -82,6 +82,20 @@ SHOULDER_FLARE_MAX = 75      # hip-shoulder-elbow above this = flaring
 
 BODY_HORIZONTAL_RATIO = 0.35  # |shoulder_y - hip_y| / h must be <
 
+TORSO_TILT_MAX = 40          # shoulder->hip line vs horizontal; above = body not parallel
+
+# Depth via floor proximity: at the bottom of a full rep the shoulder should be
+# close to wrist height. The gap (wrist_y - shoulder_y) is normalized by torso
+# length so it is scale/framing independent. If the smallest gap over the rep
+# is still above this ratio, the chest never got near the floor -> half rep.
+DEPTH_SHOULDER_WRIST_RATIO = 0.70
+
+# A per-frame form issue (sag/pike/tilt/flare) must be present on at least this
+# fraction of the rep's frames (and no fewer than MIN_ISSUE_FRAMES) before the
+# rep is marked bad. This debounces single-frame landmark jitter.
+ISSUE_FRAME_FRACTION = 0.25
+MIN_ISSUE_FRAMES = 3
+
 
 # =========================================================
 # ANGLE HELPER
@@ -119,6 +133,28 @@ def _label(frame, text, point, offset=(10, 0)) -> None:
     )
 
 
+def _finalize_rep(rep: dict) -> None:
+    """Promote persistent per-frame issues, apply depth checks, set verdict."""
+    # Only flag frame-based issues that persisted long enough to be real form
+    # breaks rather than single-frame landmark jitter.
+    down_frames = max(1, rep.get("down_frames", 1))
+    required = max(MIN_ISSUE_FRAMES, int(down_frames * ISSUE_FRAME_FRACTION))
+    for issue, count in rep.get("issue_frames", {}).items():
+        if count >= required:
+            rep["issues"].add(issue)
+
+    if rep["min_elbow"] > TARGET_DEPTH:
+        rep["issues"].add(
+            f"Didn't go deep enough (min elbow {rep['min_elbow']}°)"
+        )
+
+    min_depth = rep.get("min_depth_ratio")
+    if min_depth is None or min_depth > DEPTH_SHOULDER_WRIST_RATIO:
+        rep["issues"].add("Half rep: chest didn't get close to the floor")
+
+    rep["good"] = len(rep["issues"]) == 0
+
+
 def _rep_to_json(rep: dict) -> dict:
     return {
         "rep_number": rep["rep_number"],
@@ -127,6 +163,11 @@ def _rep_to_json(rep: dict) -> dict:
         "min_elbow": rep["min_elbow"],
         "min_back": rep["min_back"],
         "max_back": rep["max_back"],
+        "min_depth_ratio": (
+            round(rep["min_depth_ratio"], 2)
+            if rep.get("min_depth_ratio") is not None
+            else None
+        ),
         "good": rep["good"],
         "issues": list(rep["issues"]),
     }
@@ -244,40 +285,64 @@ def analyze_pushups(
                             "min_elbow": elbow_angle,
                             "min_back": back_angle,
                             "max_back": back_angle,
+                            "min_depth_ratio": None,
                             "issues": set(),
+                            "issue_frames": {},
+                            "down_frames": 0,
                         }
 
                     if pushup_state == "down" and current_rep is not None:
+                        current_rep["down_frames"] += 1
+                        issue_frames = current_rep["issue_frames"]
                         current_rep["min_elbow"] = min(current_rep["min_elbow"], elbow_angle)
                         current_rep["min_back"] = min(current_rep["min_back"], back_angle)
                         current_rep["max_back"] = max(current_rep["max_back"], back_angle)
 
-                        if back_angle < BACK_STRAIGHT_MIN:
-                            dx = ankle[0] - shoulder[0]
-                            if dx != 0:
-                                t = (hip[0] - shoulder[0]) / dx
-                                line_y = shoulder[1] + t * (ankle[1] - shoulder[1])
+                        # Hips must stay on the shoulder->ankle line for the
+                        # whole rep. Checked every frame (no back-angle gate)
+                        # so gradual sags are caught too.
+                        dx = ankle[0] - shoulder[0]
+                        if dx != 0:
+                            t = (hip[0] - shoulder[0]) / dx
+                            line_y = shoulder[1] + t * (ankle[1] - shoulder[1])
+                        else:
+                            line_y = (shoulder[1] + ankle[1]) / 2
+                        hip_offset = hip[1] - line_y
+                        if abs(hip_offset) > h * PIKE_OFFSET_RATIO:
+                            if hip_offset > 0:
+                                key = "Hips sagging (back not straight)"
                             else:
-                                line_y = (shoulder[1] + ankle[1]) / 2
-                            hip_offset = hip[1] - line_y
-                            if abs(hip_offset) > h * PIKE_OFFSET_RATIO:
-                                if hip_offset > 0:
-                                    current_rep["issues"].add("Hips sagging (back not straight)")
-                                else:
-                                    current_rep["issues"].add("Hips piking up (back not straight)")
+                                key = "Hips piking up (back not straight)"
+                            issue_frames[key] = issue_frames.get(key, 0) + 1
+
+                        # Body must stay near parallel to the floor.
+                        torso_dx = abs(hip[0] - shoulder[0])
+                        torso_dy = abs(hip[1] - shoulder[1])
+                        if torso_dx > 0 or torso_dy > 0:
+                            torso_tilt = math.degrees(math.atan2(torso_dy, torso_dx))
+                            if torso_tilt > TORSO_TILT_MAX:
+                                key = "Body not parallel to the floor"
+                                issue_frames[key] = issue_frames.get(key, 0) + 1
+
+                        # Floor proximity: track how close the shoulder gets to
+                        # wrist height, normalized by torso length.
+                        torso_len = math.hypot(hip[0] - shoulder[0], hip[1] - shoulder[1])
+                        if torso_len > 0:
+                            depth_ratio = (wrist[1] - shoulder[1]) / torso_len
+                            if (
+                                current_rep["min_depth_ratio"] is None
+                                or depth_ratio < current_rep["min_depth_ratio"]
+                            ):
+                                current_rep["min_depth_ratio"] = depth_ratio
+
                         if shoulder_angle > SHOULDER_FLARE_MAX:
-                            current_rep["issues"].add("Elbows flaring out from torso")
+                            key = "Elbows flaring out from torso"
+                            issue_frames[key] = issue_frames.get(key, 0) + 1
 
                         if elbow_angle >= ELBOW_UP_THRESHOLD:
                             pushup_state = "up"
                             current_rep["end_frame"] = frame_idx
-
-                            if current_rep["min_elbow"] > TARGET_DEPTH:
-                                current_rep["issues"].add(
-                                    f"Didn't go deep enough (min elbow {current_rep['min_elbow']}°)"
-                                )
-
-                            current_rep["good"] = len(current_rep["issues"]) == 0
+                            _finalize_rep(current_rep)
                             reps.append(current_rep)
                             current_rep = None
 
@@ -292,11 +357,7 @@ def analyze_pushups(
     # Close any rep still in progress at end-of-video so it shows in the replay.
     if current_rep is not None:
         current_rep["end_frame"] = max(0, frame_idx - 1)
-        if current_rep["min_elbow"] > TARGET_DEPTH:
-            current_rep["issues"].add(
-                f"Didn't go deep enough (min elbow {current_rep['min_elbow']}°)"
-            )
-        current_rep["good"] = len(current_rep["issues"]) == 0
+        _finalize_rep(current_rep)
         reps.append(current_rep)
 
     # Build a lookup so each frame knows what rep (if any) it belongs to.

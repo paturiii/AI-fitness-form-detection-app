@@ -7,4 +7,4 @@ pandas
 scikit-learn
 python-multipart
 opencv-python
-mediapipe
+mediapipe<1.0

@@ -105,8 +105,8 @@ Feedback is generated using **pose estimation + rule-based biomechanics**, ensur
 
 1. Create a project at [supabase.com](https://supabase.com)
 2. Go to **Settings → API** and copy:
-  - `Project URL` → `SUPABASE_URL`
-  - `anon public` key → `SUPABASE_KEY`
+   - `Project URL` → `SUPABASE_URL`
+   - `anon public` key → `SUPABASE_KEY`
 3. (Optional) Disable email confirmation under **Auth → Settings → Email** to make signup instant during development
 
 ## Backend Setup
@@ -141,19 +141,49 @@ The push-up analyzer will refuse to start if this file is missing.
 cd frontend
 npm install
 
-# Start Expo
-npx expo start
+# Start Expo in the development server
+npm start
 ```
 
-The first launch will prompt for camera, microphone, and photo-library permissions (configured in `app.json` via the `expo-image-picker` plugin) — all three are needed for record + library upload.
+Once Expo starts, use one of these options in the terminal:
+
+- Press `i` to open the iOS simulator
+- Press `a` to open the Android emulator
+- Press `w` to open the web app
+- Scan the QR code with Expo Go to use a physical device
+
+You can also launch a target directly:
+
+```bash
+npm run ios
+npm run android
+npm run web
+```
+
+Run the backend in a separate terminal before using authentication or video
+analysis:
+
+```bash
+cd backend
+source venv/bin/activate
+uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+The first launch will prompt for camera, microphone, and photo-library
+permissions (configured in `app.json` via the `expo-image-picker` plugin) —
+all three are needed for recording and library uploads.
 
 ### API URL Configuration
 
-Edit `frontend/src/services/api.ts` and set the `API_URL`:
+Edit `frontend/src/services/api.ts` and set `API_BASE_URL` to match where the
+backend is running:
 
 - **Android Emulator**: `http://10.0.2.2:8000`
 - **iOS Simulator**: `http://localhost:8000`
 - **Physical device**: Use your computer's local IP, e.g. `http://192.168.1.x:8000`
+
+For a physical device, make sure the phone and computer are on the same
+network and start the backend with `--host 0.0.0.0`.
 
 ---
 
@@ -167,12 +197,10 @@ Edit `frontend/src/services/api.ts` and set the `API_URL`:
 
 ### `/record` API
 
-
 | Method | Path                                  | Notes                                                                                       |
 | ------ | ------------------------------------- | ------------------------------------------------------------------------------------------- |
 | `POST` | `/record/upload-video?exercise=<key>` | Multipart `video=<file>`. Bearer-authed. Currently supports `exercise=push_up`.             |
 | `GET`  | `/record/video/{analysis_id}`         | One-shot stream of the annotated MP4; the file is removed from disk once playback finishes. |
-
 
 ### Filming guidelines (push-ups)
 
